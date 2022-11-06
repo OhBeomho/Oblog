@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Oblog</title>
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/read.css" />
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="" class="brand">Oblog</a>
+				<div>
+					<a href="/">블로그</a>
+					<a href="/write" class="active">글쓰기</a>
+					<a id="accountID">로그인된 ID: </a>
+				</div>
+			</nav>
+		</header>
+		<main>
+			<h2 class="title"></h2>
+			<hr />
+			<div style="display: flex; justify-content: space-between">
+				<div class="writer-id"></div>
+				<div class="write-date"></div>
+			</div>
+			<div class="content"></div>
+			<div>
+				<button onclick="location.href = '/'">홈으로</button>
+			</div>
+		</main>
+		<footer>
+			Made by <b>OhBeomho</b><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">Github</a>.
+		</footer>
+
+		<script>
+			const accountID = document.getElementById("accountID");
+
+			window.addEventListener("load", () => {
+				const xhr = new XMLHttpRequest();
+				xhr.open("GET", "/getid");
+				xhr.send();
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4 && xhr.status === 200) {
+						accountID.innerText += " " + xhr.response;
+					}
+				};
+
+				const blogID = new URL(location.href).searchParams.get("id");
+
+				xhr.open("POST", "/read");
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify({ blogID }));
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							const result = JSON.parse(xhr.response).result;
+
+							if (result === "NOT_FOUND") {
+								document.querySelector("main").innerText = "존재하지 않는 글입니다.";
+								return;
+							}
+
+							const { title, writerid, writedate, content } = result;
+							document.querySelector(".title").innerText = title;
+							document.querySelector(".writer-id").innerText = writerid;
+							document.querySelector(".write-date").innerText = writedate;
+							document.querySelector(".content").innerText = content;
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+						}
+					}
+				};
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Oblog</title>
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/index.css" />
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="" class="brand">Oblog</a>
+				<div>
+					<a href="/" class="active">블로그</a>
+					<a href="/write">글쓰기</a>
+					<a id="accountID">로그인된 ID:</a>
+				</div>
+			</nav>
+		</header>
+		<dialog id="accountDialog">
+			<div style="display: flex; align-items: center">
+				<svg
+					version="1.1"
+					id="Capa_1"
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					x="0px"
+					y="0px"
+					viewBox="0 0 60 60"
+					width="40px"
+					height="40px"
+					fill="#000000"
+					style="border-radius: 50%; padding: 5px; box-shadow: 0 0 0 1px black"
+				>
+					<ellipse style="fill: #010002" cx="30.336" cy="12.097" rx="11.997" ry="12.097" />
+					<path
+						style="fill: #010002"
+						d="M35.64,30.079H25.031c-7.021,0-12.714,5.739-12.714,12.821v17.771h36.037V42.9
+					C48.354,35.818,42.661,30.079,35.64,30.079z"
+					/>
+				</svg>
+				<span id="id"></span>
+			</div>
+			<div style="margin: 20px 0">
+				<button id="logout">로그아웃</button>
+				<button id="delete">계정 삭제</button>
+			</div>
+			<button class="close">닫기</button>
+		</dialog>
+		<main>
+			<div>
+				<h1>블로그 홈</h1>
+				Oblog 에 올라온 글들입니다.
+			</div>
+			<hr style="background-color: gray" />
+			<ul id="list"></ul>
+			<div>
+				<button id="loadMore">더 보기</button>
+			</div>
+		</main>
+		<footer>
+			Made by <b>OhBeomho</b><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">Github</a>.
+		</footer>
+
+		<script>
+			const loadButton = document.getElementById("loadMore");
+			const blogList = document.getElementById("list");
+			const accountID = document.getElementById("accountID");
+			const accountDialog = document.getElementById("accountDialog");
+			const logoutButton = document.getElementById("logout");
+			const deleteButton = document.getElementById("delete");
+
+			loadButton.addEventListener("click", loadBlogs);
+			window.addEventListener("load", () => {
+				const xhr = new XMLHttpRequest();
+				xhr.open("GET", "/getid");
+				xhr.send();
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4 && xhr.status === 200) {
+						accountID.innerText += " " + xhr.response;
+						accountDialog.querySelector("#id").innerText = xhr.response;
+					}
+				};
+
+				loadBlogs();
+			});
+
+			accountID.addEventListener("click", () => accountDialog.showModal());
+			accountDialog.querySelector(".close").addEventListener("click", () => accountDialog.close());
+			logoutButton.addEventListener("click", () => {
+				const xhr = new XMLHttpRequest();
+				xhr.open("GET", "/logout");
+				xhr.send();
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							alert("로그아웃 되었습니다.");
+							location.href = "/login";
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+						}
+					}
+				};
+			});
+			deleteButton.addEventListener("click", () => {
+				if (confirm("정말로 계정을 삭제하시겠습니까?")) {
+					const xhr = new XMLHttpRequest();
+					xhr.open("GET", "/delete");
+					xhr.send();
+					xhr.onreadystatechange = () => {
+						if (xhr.readyState === 4) {
+							if (xhr.status === 200) {
+								alert("계정이 삭제 되었습니다.");
+								location.href = "/login";
+							} else if (xhr.status === 500) {
+								alert("서버에서 오류가 발생했습니다.");
+							}
+						}
+					};
+				}
+			});
+
+			let blogCount = 0;
+			const BLOGS_PER_LOAD = 20;
+
+			function addBlog({ title, writerid, writedate, id }) {
+				const blog = document.createElement("li");
+				blog.className = "blog";
+				blog.innerHTML = `
+					<a href="/read?id=${id}">
+						<span class="title">${title}</span>
+						<span class="writer-id">${writerid}</span>
+						<span class="write-date">${writedate}</span>
+					</a>
+				`;
+
+				blogList.prepend(blog);
+			}
+
+			function loadBlogs() {
+				const xhr = new XMLHttpRequest();
+				xhr.open("POST", "/blogs");
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(
+					JSON.stringify({
+						offset: blogCount,
+						count: BLOGS_PER_LOAD
+					})
+				);
+
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							const blogs = JSON.parse(xhr.response).result;
+							blogCount += blogs.length;
+
+							for (let blog of blogs) {
+								addBlog(blog);
+							}
+						} else if (xhr.status === 500) {
+							alert("블로그를 불러오던 중 오류 발생");
+						}
+					}
+				};
+			}
+		</script>
+	</body>
+</html>
