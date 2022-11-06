@@ -27,7 +27,7 @@
 				<div class="write-date"></div>
 			</div>
 			<div class="content"></div>
-			<div>
+			<div class="buttons">
 				<button onclick="location.href = '/'">홈으로</button>
 			</div>
 		</main>
@@ -38,6 +38,8 @@
 
 		<script>
 			const accountID = document.getElementById("accountID");
+			const blogID = new URL(location.href).searchParams.get("id");
+			let userID;
 
 			window.addEventListener("load", () => {
 				const xhr = new XMLHttpRequest();
@@ -46,33 +48,66 @@
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState === 4 && xhr.status === 200) {
 						accountID.innerText += " " + xhr.response;
+						userID = xhr.response;
+
+						getBlog();
 					}
 				};
 
-				const blogID = new URL(location.href).searchParams.get("id");
+				const getBlog = () => {
+					xhr.open("post", "/read");
+					xhr.setRequestHeader("Content-Type", "application/json");
+					xhr.send(JSON.stringify({ blogID }));
+					xhr.onreadystatechange = () => {
+						if (xhr.readyState === 4) {
+							if (xhr.status === 200) {
+								const result = JSON.parse(xhr.response).result;
 
-				xhr.open("POST", "/read");
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(JSON.stringify({ blogID }));
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							const result = JSON.parse(xhr.response).result;
+								if (result === "NOT_FOUND") {
+									document.querySelector("main").innerText = "존재하지 않는 글입니다.";
+									return;
+								}
 
-							if (result === "NOT_FOUND") {
-								document.querySelector("main").innerText = "존재하지 않는 글입니다.";
-								return;
+								const { title, writerid, writedate, content } = result;
+								document.querySelector(".title").innerText = title;
+								document.querySelector(".writer-id").innerText = writerid;
+								document.querySelector(".write-date").innerText = writedate;
+								document.querySelector(".content").innerText = content;
+
+								if (userID === writerid) {
+									const deleteBlogButton = document.createElement("button");
+									deleteBlogButton.innerText = "글 삭제";
+									deleteBlogButton.addEventListener("click", () => {
+										xhr.open("POST", "/deleteBlog");
+										xhr.setRequestHeader("Content-Type", "application/json");
+										xhr.send(JSON.stringify({ blogID }));
+										xhr.onreadystatechange = () => {
+											if (xhr.readyState === 4) {
+												if (xhr.status === 200) {
+													const result = JSON.parse(xhr.response).result;
+
+													if (result === "NOT_FOUND") {
+														alert("존재하지 않는 글입니다.");
+													} else if (result === "NOT_OP") {
+														alert("이 글의 작성자가 아닙니다.");
+													} else if (result === "SUCCESS") {
+														alert("글이 성공적으로 삭제되었습니다.");
+														location.href = "/";
+													}
+												} else if (xhr.status === 500) {
+													alert("서버에서 오류가 발생했습니다.");
+												}
+											}
+										};
+									});
+
+									document.querySelector(".buttons").appendChild(deleteBlogButton);
+								}
+							} else if (xhr.status === 500) {
+								alert("서버에서 오류가 발생했습니다.");
 							}
-
-							const { title, writerid, writedate, content } = result;
-							document.querySelector(".title").innerText = title;
-							document.querySelector(".writer-id").innerText = writerid;
-							document.querySelector(".write-date").innerText = writedate;
-							document.querySelector(".content").innerText = content;
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
 						}
-					}
+					};
 				};
 			});
 		</script>

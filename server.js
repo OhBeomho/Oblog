@@ -95,6 +95,37 @@ app.get("/delete", (req, res) => {
 });
 app.get("/getid", (req, res) => res.send(req.session.user));
 
+app.post("/deleteBlog", (req, res) => {
+	const { blogID } = req.body;
+
+	if (req.session.user) {
+		db.query(`SELECT * FROM blog WHERE id='${blogID}'`, (err, result) => {
+			if (err) {
+				console.log(err.message);
+				res.sendStatus(500);
+				return;
+			}
+
+			if (!result.rows[0]) {
+				res.send(JSON.stringify({ result: "NOT_FOUND" }));
+				return;
+			} else if (result.rows[0].writerid !== req.session.user) {
+				res.send(JSON.stringify({ result: "NOT_OP" }));
+				return;
+			}
+
+			db.query(`DELETE FROM blog WHERE id='${blogID}'`, (err, _result) => {
+				if (err) {
+					console.log(err.message);
+					res.sendStatus(500);
+					return;
+				}
+
+				res.send(JSON.stringify({ result: "SUCCESS" }));
+			});
+		});
+	}
+});
 app.post("/idcheck", (req, res) => {
 	const { id } = req.body;
 
