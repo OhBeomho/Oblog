@@ -266,7 +266,7 @@ app.post("/read", (req, res) => {
 app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
-	db.query(`SELECT * FROM blog LIMIT ${count} OFFSET ${offset}`, (err, result) => {
+	db.query(`SELECT * FROM blog LIMIT ${count} OFFSET ${offset} ORDER BY writedate DESC`, (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
