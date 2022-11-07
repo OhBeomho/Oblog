@@ -7,6 +7,14 @@
 		<title>Oblog</title>
 		<link rel="stylesheet" href="css/main.css" />
 		<link rel="stylesheet" href="css/read.css" />
+		<!-- Fontawesome css for like, dislike button -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+			integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
 	</head>
 	<body>
 		<header>
@@ -27,9 +35,11 @@
 				<div class="write-date"></div>
 			</div>
 			<div class="content"></div>
-			<div class="buttons">
-				<button onclick="location.href = '/'">홈으로</button>
+			<div class="likes">
+				<button id="like"><i class="fas fa-thumbs-up"></i></button>
+				<button id="dislike"><i class="fas fa-thumbs-down"></i></button>
 			</div>
+			<div class="buttons"><button onclick="location.href = '/'">홈으로</button></div>
 		</main>
 		<footer>
 			Made by <b>OhBeomho</b><br />
@@ -40,6 +50,52 @@
 			const accountID = document.getElementById("accountID");
 			const blogID = new URL(location.href).searchParams.get("id");
 			let userID;
+
+			const likeButton = document.getElementById("like");
+			const dislikeButton = document.getElementById("dislike");
+
+			likeButton.addEventListener("click", () => {
+				const xhr = new XMLHttpRequest();
+				const type = likeButton.classList.contains("active") ? "likeCancel" : "like";
+				xhr.open("GET", `/likes?type=${type}&id=${blogID}`);
+				xhr.send();
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							likeButton.classList.toggle("active");
+
+							if (dislikeButton.classList.contains("active")) {
+								dislikeButton.click();
+							}
+
+							location.reload();
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+						}
+					}
+				};
+			});
+			dislikeButton.addEventListener("click", () => {
+				const xhr = new XMLHttpRequest();
+				const type = dislikeButton.classList.contains("active") ? "dislikeCancel" : "dislike";
+				xhr.open("GET", `/likes?type=${type}&id=${blogID}`);
+				xhr.send();
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							dislikeButton.classList.toggle("active");
+
+							if (likeButton.classList.contains("active")) {
+								likeButton.click();
+							}
+
+							location.reload();
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+						}
+					}
+				};
+			});
 
 			window.addEventListener("load", () => {
 				const xhr = new XMLHttpRequest();
@@ -68,11 +124,31 @@
 									return;
 								}
 
-								const { title, writerid, writedate, content } = result;
+								const { title, writerid, writedate, content, likeidarray, dislikeidarray } = result;
 								document.querySelector(".title").innerText = title;
 								document.querySelector(".writer-id").innerText = writerid;
 								document.querySelector(".write-date").innerText = writedate;
 								document.querySelector(".content").innerText = content;
+
+								if (likeidarray) {
+									likeButton.innerHTML += " " + likeidarray.length;
+
+									if (likeidarray.includes(userID)) {
+										likeButton.classList.add("active");
+									}
+								} else {
+									likeButton.innerHTML += " 0";
+								}
+
+								if (dislikeidarray) {
+									dislikeButton.innerHTML += " " + dislikeidarray.length;
+
+									if (dislikeidarray.includes(userID)) {
+										dislikeButton.classList.add("active");
+									}
+								} else {
+									dislikeButton.innerHTML += " 0";
+								}
 
 								if (userID === writerid) {
 									const deleteBlogButton = document.createElement("button");
@@ -101,7 +177,14 @@
 										};
 									});
 
-									document.querySelector(".buttons").appendChild(deleteBlogButton);
+									const updateButton = document.createElement("button");
+									updateButton.innerText = "글 수정";
+									updateButton.addEventListener(
+										"click",
+										() => (location.href = "/write?update=" + result.id)
+									);
+
+									document.querySelector(".buttons").append(deleteBlogButton, updateButton);
 								}
 							} else if (xhr.status === 500) {
 								alert("서버에서 오류가 발생했습니다.");

@@ -26,7 +26,7 @@ db.connect((err) => {
 	console.log("Connected to database.");
 
 	db.query(
-		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerId TEXT NOT NULL, writeDate TEXT NOT NULL, content TEXT NOT NULL)",
+		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerId TEXT NOT NULL, writeDate TEXT NOT NULL, content TEXT NOT NULL, likeIDArray TEXT[] DEFAULT '{}', dislikeIDArray TEXT[] DEFAULT '{}')",
 		checkError
 	);
 	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL)", checkError);
@@ -94,6 +94,36 @@ app.get("/delete", (req, res) => {
 	}
 });
 app.get("/getid", (req, res) => res.send(req.session.user));
+app.get("/likes", (req, res) => {
+	if (req.session.user) {
+		const type = req.query.type;
+		const id = req.query.id;
+		const arrayName =
+			type === "like" || type === "likeCancel"
+				? "likeIDArray"
+				: type === "dislike" || type === "dislikeCancel"
+				? "dislikeIDArray"
+				: "NONE";
+		const functionName = type.includes("Cancel") ? "ARRAY_REMOVE" : "ARRAY_APPEND";
+
+		if (arrayName === "NONE") {
+			return;
+		}
+
+		db.query(
+			`UPDATE blog SET ${arrayName}=${functionName}(${arrayName}, '${req.session.user}') WHERE id='${id}'`,
+			(err, _result) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+					return;
+				} else {
+					res.sendStatus(200);
+				}
+			}
+		);
+	}
+});
 
 app.post("/deleteBlog", (req, res) => {
 	const { blogID } = req.body;
@@ -190,6 +220,22 @@ app.post("/write", (req, res) => {
 	db.query(
 		`INSERT INTO blog(title, content, writerId, writeDate) VALUES('${title}', '${content}', '${id}', '${date}')`,
 		(err) => {
+			if (err) {
+				console.error(err.message);
+				res.sendStatus(500);
+			} else {
+				res.sendStatus(200);
+			}
+		}
+	);
+});
+app.post("/update", (req, res) => {
+	const { title, content, id } = req.body;
+	const date = new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+
+	db.query(
+		`UPDATE blog SET title='${title}', content='${content}', writeDate='${date}' WHERE id='${id}'`,
+		(err, _result) => {
 			if (err) {
 				console.error(err.message);
 				res.sendStatus(500);

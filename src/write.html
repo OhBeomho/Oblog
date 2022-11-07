@@ -22,10 +22,7 @@
 		<main>
 			<form>
 				<h1>글쓰기</h1>
-				<div>
-					<label for="title">제목</label>
-					<input type="text" name="title" id="title" />
-				</div>
+				<div>제목 <input type="text" name="title" /></div>
 				<div>
 					<textarea name="content"></textarea>
 				</div>
@@ -44,6 +41,38 @@
 			const accountID = document.getElementById("accountID");
 			const writeButton = document.getElementById("write");
 			const form = document.querySelector("form");
+			let userID;
+
+			const updateBlog = new URL(location.href).searchParams.get("update");
+			if (updateBlog) {
+				const xhr = new XMLHttpRequest();
+				xhr.open("POST", "/read");
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify({ blogID: updateBlog }));
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							const result = JSON.parse(xhr.response).result;
+
+							if (result === "NOT_FOUND") {
+								alert("존재하지 않는 글입니다.");
+							} else if (result.writerid !== userID) {
+								alert("이 글의 작성자가 아닙니다.");
+							} else {
+								form.querySelector("input[name='title']").value = result.title;
+								form.querySelector("textarea[name='content']").value = result.content;
+								writeButton.innerText = "수정하기";
+								return;
+							}
+
+							location.href = "/";
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+							location.href = "/";
+						}
+					}
+				};
+			}
 
 			window.addEventListener("load", () => {
 				const xhr = new XMLHttpRequest();
@@ -52,6 +81,7 @@
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState === 4 && xhr.status === 200) {
 						accountID.innerText += " " + xhr.response;
+						userID = xhr.response;
 					}
 				};
 			});
@@ -60,14 +90,24 @@
 				const data = {};
 				new FormData(form).forEach((value, key) => (data[key] = value));
 
+				const url = writeButton.innerText === "수정하기" ? "/update" : "/write";
+				if (url === "/update") {
+					data.id = updateBlog;
+				}
+
 				const xhr = new XMLHttpRequest();
-				xhr.open("POST", "/write");
+				xhr.open("POST", url);
 				xhr.setRequestHeader("Content-Type", "application/json");
 				xhr.send(JSON.stringify(data));
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState === 4) {
 						if (xhr.status === 200) {
-							alert("글이 올려졌습니다.");
+							if (url === "/update") {
+								alert("글을 수정했습니다.");
+							} else {
+								alert("글이 올려졌습니다.");
+							}
+
 							location.href = "/";
 						} else if (xhr.status === 500) {
 							alert("서버에서 오류가 발생했습니다.");

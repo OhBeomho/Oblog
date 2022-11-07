@@ -21,6 +21,22 @@ hr {
 	background-color: gray;
 }
 
+#like {
+	color: red;
+}
+
+#like.active {
+	background-color: rgba(255, 0, 0, 0.2);
+}
+
+#dislike {
+	color: rgb(0, 60, 255);
+}
+
+#dislike.active {
+	background-color: rgba(0, 60, 255, 0.2);
+}
+
 @media screen and (max-width: 650px) {
 	main > * {
 		width: 90%;
