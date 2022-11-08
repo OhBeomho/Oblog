@@ -156,7 +156,15 @@ app.post("/deleteBlog", (req, res) => {
 					return;
 				}
 
-				res.send(JSON.stringify({ result: "SUCCESS" }));
+				db.query("DELETE FROM comment WHERE blogID = $1", [blogID], (err) => {
+					if (err) {
+						console.log(err.message);
+						res.sendStatus(500);
+						return;
+					}
+
+					res.send(JSON.stringify({ result: "SUCCESS" }));
+				});
 			});
 		});
 	}
@@ -269,14 +277,18 @@ app.post("/update", (req, res) => {
 	const { title, content, id } = req.body;
 	const date = getDate();
 
-	db.query("UPDATE blog SET title = $1, content = $2, writeDate = $3 WHERE id = $4", [title, content, date, id], (err) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		} else {
-			res.sendStatus(200);
+	db.query(
+		"UPDATE blog SET title = $1, content = $2, writeDate = $3 WHERE id = $4",
+		[title, content, date, id],
+		(err) => {
+			if (err) {
+				console.error(err.message);
+				res.sendStatus(500);
+			} else {
+				res.sendStatus(200);
+			}
 		}
-	});
+	);
 });
 app.post("/read", (req, res) => {
 	const { blogID } = req.body;
@@ -309,15 +321,19 @@ app.post("/read", (req, res) => {
 app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
-	db.query("SELECT * FROM blog ORDER BY writedate DESC, id DESC LIMIT $1 OFFSET $2", [count, offset], (err, result) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-			return;
-		}
+	db.query(
+		"SELECT * FROM blog ORDER BY writedate DESC, id DESC LIMIT $1 OFFSET $2",
+		[count, offset],
+		(err, result) => {
+			if (err) {
+				console.error(err.message);
+				res.sendStatus(500);
+				return;
+			}
 
-		res.send(JSON.stringify({ result: result.rows }));
-	});
+			res.send(JSON.stringify({ result: result.rows }));
+		}
+	);
 });
 
 function getDate() {
