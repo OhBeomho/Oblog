@@ -3,10 +3,15 @@ main > * {
 	width: 600px;
 }
 
-.content {
+.content,
+.c-content {
 	white-space: pre-wrap;
 	word-break: break-word;
 	text-align: left;
+}
+
+.c-content {
+	padding: 5px;
 }
 
 .write-date {
@@ -35,6 +40,35 @@ hr {
 
 #dislike.active {
 	background-color: rgba(0, 60, 255, 0.2);
+}
+
+#commentList {
+	list-style: none;
+	padding: 0;
+	margin: 15px auto;
+}
+
+.comment {
+	width: 90%;
+	margin: auto;
+}
+
+.comment .top {
+	display: flex;
+	justify-content: space-between;
+}
+
+.comment .profile {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+textarea {
+	resize: none;
+	outline: none;
+	width: 80%;
+	height: 60px;
 }
 
 @media screen and (max-width: 650px) {

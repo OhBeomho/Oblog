@@ -40,6 +40,13 @@
 				<button id="dislike"><i class="fas fa-thumbs-down"></i></button>
 			</div>
 			<div class="buttons"><button onclick="location.href = '/'">홈으로</button></div>
+			<div>
+				<ul id="commentList"></ul>
+				<form>
+					<textarea name="content"></textarea><br />
+					<button type="button" id="comment">댓글 달기</button>
+				</form>
+			</div>
 		</main>
 		<footer>
 			Made by <b>OhBeomho</b><br />
@@ -53,6 +60,32 @@
 
 			const likeButton = document.getElementById("like");
 			const dislikeButton = document.getElementById("dislike");
+			const commentList = document.getElementById("commentList");
+
+			const form = document.querySelector("form");
+			const commentButton = document.getElementById("comment");
+
+			commentButton.addEventListener("click", () => {
+				const data = {
+					content: new FormData(form).get("content"),
+					blogID
+				};
+
+				const xhr = new XMLHttpRequest();
+				xhr.open("POST", "/comment");
+				xhr.setRequestHeader("Content-Type", "application/json");
+				xhr.send(JSON.stringify(data));
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							alert("댓글을 달았습니다.");
+							location.reload();
+						} else if (xhr.status === 500) {
+							alert("서버에서 오류가 발생했습니다.");
+						}
+					}
+				};
+			});
 
 			likeButton.addEventListener("click", () => {
 				const xhr = new XMLHttpRequest();
@@ -110,7 +143,7 @@
 					}
 				};
 
-				const getBlog = () => {
+				function getBlog() {
 					xhr.open("post", "/read");
 					xhr.setRequestHeader("Content-Type", "application/json");
 					xhr.send(JSON.stringify({ blogID }));
@@ -124,7 +157,7 @@
 									return;
 								}
 
-								const { title, writerid, writedate, content, likeidarray, dislikeidarray } = result;
+								const { title, writerid, writedate, content, likeidarray, dislikeidarray } = result[0];
 								document.querySelector(".title").innerText = title;
 								document.querySelector(".writer-id").innerText = writerid;
 								document.querySelector(".write-date").innerText = writedate;
@@ -186,12 +219,79 @@
 
 									document.querySelector(".buttons").append(deleteBlogButton, updateButton);
 								}
+
+								const comments = result[1];
+								if (comments) {
+									for (let comment of comments) {
+										addComment(comment);
+									}
+								}
 							} else if (xhr.status === 500) {
 								alert("서버에서 오류가 발생했습니다.");
 							}
 						}
 					};
-				};
+				}
+
+				function addComment({ id, writerid, writedate, content }) {
+					const comment = document.createElement("li");
+					comment.className = "comment";
+					comment.innerHTML = `
+						<div class="top">
+							<div class="profile">
+								<svg
+									version="1.1"
+									id="Capa_1"
+									xmlns="http://www.w3.org/2000/svg"
+									xmlns:xlink="http://www.w3.org/1999/xlink"
+									x="0px"
+									y="0px"
+									viewBox="0 0 60 60"
+									width="30px"
+									height="30px"
+									fill="#000000"
+									style="border-radius: 50%; padding: 5px; box-shadow: 0 0 0 1px black"
+								>
+									<ellipse style="fill: #010002" cx="30.336" cy="12.097" rx="11.997" ry="12.097" />
+									<path
+										style="fill: #010002"
+										d="M35.64,30.079H25.031c-7.021,0-12.714,5.739-12.714,12.821v17.771h36.037V42.9
+										C48.354,35.818,42.661,30.079,35.64,30.079z"
+									/>
+								</svg>
+								<div class="c-writer-id">${writerid}</div>
+							</div>
+							<div class="c-write-date">${writedate}</div>
+						</div>
+						<button class="delete" style="float: right">삭제</button>
+						<div class="c-content">${content}</div>
+						<hr />
+					`;
+
+					commentList.appendChild(comment);
+
+					const deleteButton = comment.querySelector(".delete");
+					if (writerid === userID) {
+						deleteButton.addEventListener("click", () => {
+							const xhr = new XMLHttpRequest();
+							xhr.open("POST", "/deleteComment");
+							xhr.setRequestHeader("Content-Type", "application/json");
+							xhr.send(JSON.stringify({ id }));
+							xhr.onreadystatechange = () => {
+								if (xhr.readyState === 4) {
+									if (xhr.status === 200) {
+										alert("댓글을 삭제했습니다.");
+										location.reload();
+									} else if (xhr.status === 500) {
+										alert("서버에서 오류가 발생했습니다.");
+									}
+								}
+							};
+						});
+					} else {
+						deleteButton.remove();
+					}
+				}
 			});
 		</script>
 	</body>

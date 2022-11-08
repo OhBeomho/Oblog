@@ -30,6 +30,7 @@ db.connect((err) => {
 		checkError
 	);
 	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL)", checkError);
+	db.query("CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL)", checkError);
 
 	console.log("Initialized database.");
 });
@@ -83,7 +84,7 @@ app.get("/logout", (req, res) => {
 });
 app.get("/delete", (req, res) => {
 	if (req.session.user) {
-		db.query(`DELETE FROM account WHERE id='${req.session.user}'`, (err, _result) => {
+		db.query(`DELETE FROM account WHERE id='${req.session.user}'`, (err) => {
 			if (err) {
 				console.error(err.message);
 				res.sendStatus(500);
@@ -112,7 +113,7 @@ app.get("/likes", (req, res) => {
 
 		db.query(
 			`UPDATE blog SET ${arrayName}=${functionName}(${arrayName}, '${req.session.user}') WHERE id='${id}'`,
-			(err, _result) => {
+			(err) => {
 				if (err) {
 					console.error(err.message);
 					res.sendStatus(500);
@@ -144,7 +145,7 @@ app.post("/deleteBlog", (req, res) => {
 				return;
 			}
 
-			db.query(`DELETE FROM blog WHERE id='${blogID}'`, (err, _result) => {
+			db.query(`DELETE FROM blog WHERE id='${blogID}'`, (err) => {
 				if (err) {
 					console.log(err.message);
 					res.sendStatus(500);
@@ -215,7 +216,7 @@ app.post("/login", (req, res) => {
 app.post("/write", (req, res) => {
 	const { title, content } = req.body;
 	const id = req.session.user;
-	const date = new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+	const date = getDate();
 
 	db.query(
 		`INSERT INTO blog(title, content, writerId, writeDate) VALUES('${title}', '${content}', '${id}', '${date}')`,
@@ -229,13 +230,40 @@ app.post("/write", (req, res) => {
 		}
 	);
 });
+app.post("/comment", (req, res) => {
+	const { content, blogID } = req.body;
+	const id = req.session.user;
+	const date = getDate();
+
+	db.query(`INSERT INTO comment(blogID, content, writeDate, writerId) VALUES(${blogID}, '${content}', '${date}', '${id}')`, (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
+		}
+	});
+});
+app.post("/deleteComment", (req, res) => {
+	const { id } = req.body;
+
+	db.query(`DELETE FROM comment WHERE id='${id}'`, (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
+		}
+	});
+});
 app.post("/update", (req, res) => {
-	const { title, content, id } = req.body;
-	const date = new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+	const { title, content } = req.body;
+	const id = req.session.user;
+	const date = getDate();
 
 	db.query(
 		`UPDATE blog SET title='${title}', content='${content}', writeDate='${date}' WHERE id='${id}'`,
-		(err, _result) => {
+		(err) => {
 			if (err) {
 				console.error(err.message);
 				res.sendStatus(500);
@@ -252,12 +280,22 @@ app.post("/read", (req, res) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
+			return;
 		}
 
 		const blog = result.rows[0];
 
 		if (blog) {
-			res.send(JSON.stringify({ result: blog }));
+			db.query(`SELECT * FROM comment WHERE blogID='${blogID}' ORDER BY writeDate DESC`, (err, result) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+					return;
+				}
+
+				const comments = result.rows;
+				res.send(JSON.stringify({ result: [blog, comments] }));
+			});
 		} else {
 			res.send(JSON.stringify({ result: "NOT_FOUND" }));
 		}
@@ -276,6 +314,10 @@ app.post("/blogs", (req, res) => {
 		res.send(JSON.stringify({ result: result.rows }));
 	});
 });
+
+function getDate() {
+	return new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+}
 
 app.use(express.static("src"));
 
