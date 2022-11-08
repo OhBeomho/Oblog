@@ -30,7 +30,10 @@ db.connect((err) => {
 		checkError
 	);
 	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL)", checkError);
-	db.query("CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL)", checkError);
+	db.query(
+		"CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL)",
+		checkError
+	);
 
 	console.log("Initialized database.");
 });
@@ -84,7 +87,7 @@ app.get("/logout", (req, res) => {
 });
 app.get("/delete", (req, res) => {
 	if (req.session.user) {
-		db.query(`DELETE FROM account WHERE id='${req.session.user}'`, (err) => {
+		db.query("DELETE FROM account WHERE id = $1", [req.session.user], (err) => {
 			if (err) {
 				console.error(err.message);
 				res.sendStatus(500);
@@ -112,7 +115,8 @@ app.get("/likes", (req, res) => {
 		}
 
 		db.query(
-			`UPDATE blog SET ${arrayName}=${functionName}(${arrayName}, '${req.session.user}') WHERE id='${id}'`,
+			`UPDATE blog SET ${arrayName} = ${functionName}(${arrayName}, $1) WHERE id = $2`,
+			[req.session.user, id],
 			(err) => {
 				if (err) {
 					console.error(err.message);
@@ -130,7 +134,7 @@ app.post("/deleteBlog", (req, res) => {
 	const { blogID } = req.body;
 
 	if (req.session.user) {
-		db.query(`SELECT * FROM blog WHERE id='${blogID}'`, (err, result) => {
+		db.query(`SELECT * FROM blog WHERE id = $1`, [blogID], (err, result) => {
 			if (err) {
 				console.log(err.message);
 				res.sendStatus(500);
@@ -145,7 +149,7 @@ app.post("/deleteBlog", (req, res) => {
 				return;
 			}
 
-			db.query(`DELETE FROM blog WHERE id='${blogID}'`, (err) => {
+			db.query("DELETE FROM blog WHERE id = $1", [blogID], (err) => {
 				if (err) {
 					console.log(err.message);
 					res.sendStatus(500);
@@ -160,7 +164,7 @@ app.post("/deleteBlog", (req, res) => {
 app.post("/idcheck", (req, res) => {
 	const { id } = req.body;
 
-	db.query(`SELECT * FROM account WHERE id='${id}'`, (err, result) => {
+	db.query("SELECT * FROM account WHERE id = $1", [id], (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
@@ -179,7 +183,7 @@ app.post("/idcheck", (req, res) => {
 app.post("/signup", (req, res) => {
 	const { id, password } = req.body;
 
-	db.query(`INSERT INTO account(id, password) VALUES('${id}', '${password}')`, (err) => {
+	db.query("INSERT INTO account(id, password) VALUES($1, $2)", [id, password], (err) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
@@ -191,7 +195,7 @@ app.post("/signup", (req, res) => {
 app.post("/login", (req, res) => {
 	const { id, password } = req.body;
 
-	db.query(`SELECT * FROM account WHERE id='${id}'`, (err, result) => {
+	db.query("SELECT * FROM account WHERE id = $1", [id], (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
@@ -219,7 +223,8 @@ app.post("/write", (req, res) => {
 	const date = getDate();
 
 	db.query(
-		`INSERT INTO blog(title, content, writerId, writeDate) VALUES('${title}', '${content}', '${id}', '${date}')`,
+		"INSERT INTO blog(title, content, writerId, writeDate) VALUES($1, $2, $3, $4)",
+		[title, content, id, date],
 		(err) => {
 			if (err) {
 				console.error(err.message);
@@ -235,34 +240,9 @@ app.post("/comment", (req, res) => {
 	const id = req.session.user;
 	const date = getDate();
 
-	db.query(`INSERT INTO comment(blogID, content, writeDate, writerId) VALUES(${blogID}, '${content}', '${date}', '${id}')`, (err) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		} else {
-			res.sendStatus(200);
-		}
-	});
-});
-app.post("/deleteComment", (req, res) => {
-	const { id } = req.body;
-
-	db.query(`DELETE FROM comment WHERE id='${id}'`, (err) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		} else {
-			res.sendStatus(200);
-		}
-	});
-});
-app.post("/update", (req, res) => {
-	const { title, content } = req.body;
-	const id = req.session.user;
-	const date = getDate();
-
 	db.query(
-		`UPDATE blog SET title='${title}', content='${content}', writeDate='${date}' WHERE id='${id}'`,
+		"INSERT INTO comment(blogID, content, writeDate, writerId) VALUES($1, $2, $3, $4)",
+		[blogID, content, date, id],
 		(err) => {
 			if (err) {
 				console.error(err.message);
@@ -273,10 +253,35 @@ app.post("/update", (req, res) => {
 		}
 	);
 });
+app.post("/deleteComment", (req, res) => {
+	const { id } = req.body;
+
+	db.query("DELETE FROM comment WHERE id = $1", [id], (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
+		}
+	});
+});
+app.post("/update", (req, res) => {
+	const { title, content, id } = req.body;
+	const date = getDate();
+
+	db.query("UPDATE blog SET title = $1, content = $2, writeDate = $3 WHERE id = $4", [title, content, date, id], (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
+		}
+	});
+});
 app.post("/read", (req, res) => {
 	const { blogID } = req.body;
 
-	db.query(`SELECT * FROM blog WHERE id='${blogID}'`, (err, result) => {
+	db.query("SELECT * FROM blog WHERE id = $1", [blogID], (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
@@ -286,7 +291,7 @@ app.post("/read", (req, res) => {
 		const blog = result.rows[0];
 
 		if (blog) {
-			db.query(`SELECT * FROM comment WHERE blogID='${blogID}' ORDER BY writeDate DESC`, (err, result) => {
+			db.query("SELECT * FROM comment WHERE blogID = $1 ORDER BY writeDate DESC", [blogID], (err, result) => {
 				if (err) {
 					console.error(err.message);
 					res.sendStatus(500);
@@ -304,7 +309,7 @@ app.post("/read", (req, res) => {
 app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
-	db.query(`SELECT * FROM blog ORDER BY writedate DESC, id DESC LIMIT ${count} OFFSET ${offset}`, (err, result) => {
+	db.query("SELECT * FROM blog ORDER BY writedate DESC, id DESC LIMIT $1 OFFSET $2", [count, offset], (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
