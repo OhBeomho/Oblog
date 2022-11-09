@@ -321,7 +321,7 @@ app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
 	db.query(
-		"SELECT * FROM blog ORDER BY id ASC LIMIT $1 OFFSET $2",
+		"SELECT * FROM blog ORDER BY id DESC LIMIT $1 OFFSET $2",
 		[count, offset],
 		(err, result) => {
 			if (err) {
