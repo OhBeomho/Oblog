@@ -52,6 +52,16 @@
 				Oblog 에 올라온 글들입니다.
 			</div>
 			<hr style="background-color: gray" />
+			<div class="search">
+				<input type="search" />
+				<select id="searchType">
+					<option value="title" selected>제목</option>
+					<option value="content">내용</option>
+					<option value="writerid">작성자</option>
+					<option value="writedate">작성 날짜</option>
+				</select>
+				<button id="search">검색</button>
+			</div>
 			<ul id="list"></ul>
 			<div>
 				<button id="loadMore">더 보기</button>
@@ -69,6 +79,10 @@
 			const accountDialog = document.getElementById("accountDialog");
 			const logoutButton = document.getElementById("logout");
 			const deleteButton = document.getElementById("delete");
+			const searchField = document.querySelector("input[type='search']");
+			const searchButton = document.getElementById("search");
+
+			const blogs = [];
 
 			loadButton.addEventListener("click", loadBlogs);
 			window.addEventListener("load", () => {
@@ -119,8 +133,13 @@
 					};
 				}
 			});
+			searchButton.addEventListener("click", () => searchBlog(searchField.value.trim()));
+			searchField.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" && !e.repeat) {
+					searchBlog(searchField.value.trim());
+				}
+			});
 
-			let blogCount = 0;
 			const BLOGS_PER_LOAD = 20;
 
 			function addBlog({ title, writerid, writedate, id }) {
@@ -137,13 +156,31 @@
 				blogList.appendChild(blog);
 			}
 
+			function searchBlog(text) {
+				blogList.innerHTML = "";
+
+				if (!text) {
+					for (let blog of blogs) {
+						addBlog(blog);
+					}
+					return;
+				}
+
+				const searchType = document.getElementById("searchType").value;
+				const searchResult = blogs.filter((blog) => blog[searchType].includes(text));
+
+				for (let blog of searchResult) {
+					addBlog(blog);
+				}
+			}
+
 			function loadBlogs() {
 				const xhr = new XMLHttpRequest();
 				xhr.open("POST", "/blogs");
 				xhr.setRequestHeader("Content-Type", "application/json");
 				xhr.send(
 					JSON.stringify({
-						offset: blogCount,
+						offset: blogs.length,
 						count: BLOGS_PER_LOAD
 					})
 				);
@@ -151,11 +188,11 @@
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState === 4) {
 						if (xhr.status === 200) {
-							const blogs = JSON.parse(xhr.response).result;
-							blogCount += blogs.length;
+							const result = JSON.parse(xhr.response).result;
 
-							for (let blog of blogs) {
+							for (let blog of result) {
 								addBlog(blog);
+								blogs.push(({ title, writerid, writedate, id } = blog));
 							}
 						} else if (xhr.status === 500) {
 							alert("블로그를 불러오던 중 오류 발생");

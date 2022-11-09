@@ -275,11 +275,10 @@ app.post("/deleteComment", (req, res) => {
 });
 app.post("/update", (req, res) => {
 	const { title, content, id } = req.body;
-	const date = getDate();
 
 	db.query(
-		"UPDATE blog SET title = $1, content = $2, writeDate = $3 WHERE id = $4",
-		[title, content, date, id],
+		"UPDATE blog SET title = $1, content = $2 WHERE id = $3",
+		[title, content, id],
 		(err) => {
 			if (err) {
 				console.error(err.message);
@@ -322,7 +321,7 @@ app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
 	db.query(
-		"SELECT * FROM blog ORDER BY writedate DESC, id DESC LIMIT $1 OFFSET $2",
+		"SELECT * FROM blog LIMIT $1 OFFSET $2",
 		[count, offset],
 		(err, result) => {
 			if (err) {

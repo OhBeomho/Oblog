@@ -50,6 +50,10 @@ dialog {
 	font-weight: bold;
 }
 
+.search {
+	text-align: right;
+}
+
 @media screen and (max-width: 750px) {
 	main > * {
 		width: 90%;
