@@ -160,14 +160,14 @@
 				blogList.innerHTML = "";
 
 				if (!text) {
-					for (let blog of blogs) {
+					for (let blog of blogs.reverse()) {
 						addBlog(blog);
 					}
 					return;
 				}
 
 				const searchType = document.getElementById("searchType").value;
-				const searchResult = blogs.filter((blog) => blog[searchType].includes(text));
+				const searchResult = blogs.reverse().filter((blog) => blog[searchType].includes(text));
 
 				for (let blog of searchResult) {
 					addBlog(blog);
@@ -191,13 +191,8 @@
 							const result = JSON.parse(xhr.response).result;
 
 							for (let blog of result) {
-								blogs.push(({ title, writerid, writedate, id } = blog));
-							}
-
-							blogList.innerHTML = "";
-
-							for (let blog of blogs) {
 								addBlog(blog);
+								blogs.push(({ title, writerid, writedate, id } = blog));
 							}
 						} else if (xhr.status === 500) {
 							alert("블로그를 불러오던 중 오류 발생");
