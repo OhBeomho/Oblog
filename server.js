@@ -129,12 +129,23 @@ app.get("/likes", (req, res) => {
 		);
 	}
 });
+app.get("/deleteComment", (req, res) => {
+	const { id } = req.query;
 
-app.post("/deleteBlog", (req, res) => {
-	const { blogID } = req.body;
+	db.query("DELETE FROM comment WHERE id = $1", [id], (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
+		}
+	});
+});
+app.get("/deleteBlog", (req, res) => {
+	const { id } = req.query;
 
 	if (req.session.user) {
-		db.query(`SELECT * FROM blog WHERE id = $1`, [blogID], (err, result) => {
+		db.query(`SELECT * FROM blog WHERE id = $1`, [id], (err, result) => {
 			if (err) {
 				console.log(err.message);
 				res.sendStatus(500);
@@ -149,14 +160,14 @@ app.post("/deleteBlog", (req, res) => {
 				return;
 			}
 
-			db.query("DELETE FROM blog WHERE id = $1", [blogID], (err) => {
+			db.query("DELETE FROM blog WHERE id = $1", [id], (err) => {
 				if (err) {
 					console.log(err.message);
 					res.sendStatus(500);
 					return;
 				}
 
-				db.query("DELETE FROM comment WHERE blogID = $1", [blogID], (err) => {
+				db.query("DELETE FROM comment WHERE blogID = $1", [id], (err) => {
 					if (err) {
 						console.log(err.message);
 						res.sendStatus(500);
@@ -169,8 +180,8 @@ app.post("/deleteBlog", (req, res) => {
 		});
 	}
 });
-app.post("/idcheck", (req, res) => {
-	const { id } = req.body;
+app.get("/idcheck", (req, res) => {
+	const { id } = req.query;
 
 	db.query("SELECT * FROM account WHERE id = $1", [id], (err, result) => {
 		if (err) {
@@ -188,6 +199,7 @@ app.post("/idcheck", (req, res) => {
 		}
 	});
 });
+
 app.post("/signup", (req, res) => {
 	const { id, password } = req.body;
 
@@ -261,18 +273,6 @@ app.post("/comment", (req, res) => {
 		}
 	);
 });
-app.post("/deleteComment", (req, res) => {
-	const { id } = req.body;
-
-	db.query("DELETE FROM comment WHERE id = $1", [id], (err) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		} else {
-			res.sendStatus(200);
-		}
-	});
-});
 app.post("/update", (req, res) => {
 	const { title, content, id } = req.body;
 
@@ -290,9 +290,9 @@ app.post("/update", (req, res) => {
 	);
 });
 app.post("/read", (req, res) => {
-	const { blogID } = req.body;
+	const { id } = req.body;
 
-	db.query("SELECT * FROM blog WHERE id = $1", [blogID], (err, result) => {
+	db.query("SELECT * FROM blog WHERE id = $1", [id], (err, result) => {
 		if (err) {
 			console.error(err.message);
 			res.sendStatus(500);
@@ -302,7 +302,7 @@ app.post("/read", (req, res) => {
 		const blog = result.rows[0];
 
 		if (blog) {
-			db.query("SELECT * FROM comment WHERE blogID = $1 ORDER BY writeDate DESC", [blogID], (err, result) => {
+			db.query("SELECT * FROM comment WHERE blogID = $1 ORDER BY writeDate DESC", [id], (err, result) => {
 				if (err) {
 					console.error(err.message);
 					res.sendStatus(500);

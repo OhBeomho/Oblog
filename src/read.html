@@ -53,6 +53,7 @@
 			Source on <a href="https://github.com/OhBeomho/Oblog">Github</a>.
 		</footer>
 
+		<script src="js/request.js"></script>
 		<script>
 			const accountID = document.getElementById("accountID");
 			const blogID = new URL(location.href).searchParams.get("id");
@@ -71,166 +72,117 @@
 					blogID
 				};
 
-				const xhr = new XMLHttpRequest();
-				xhr.open("POST", "/comment");
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(JSON.stringify(data));
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							alert("댓글을 달았습니다.");
-							location.reload();
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
-					}
-				};
+				request("POST", "/comment", data, (_response) => {
+					alert("댓글을 달았습니다.");
+					location.reload();
+				});
 			});
 
 			likeButton.addEventListener("click", () => {
-				const xhr = new XMLHttpRequest();
 				const type = likeButton.classList.contains("active") ? "likeCancel" : "like";
-				xhr.open("GET", `/likes?type=${type}&id=${blogID}`);
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							likeButton.classList.toggle("active");
+				request("GET", `/likes?type=${type}&id=${blogID}`, {}, (_response) => {
+					likeButton.classList.toggle("active");
 
-							if (dislikeButton.classList.contains("active")) {
-								dislikeButton.click();
-							}
-
-							location.reload();
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
+					if (dislikeButton.classList.contains("active")) {
+						dislikeButton.click();
 					}
-				};
+
+					location.reload();
+				});
 			});
 			dislikeButton.addEventListener("click", () => {
-				const xhr = new XMLHttpRequest();
 				const type = dislikeButton.classList.contains("active") ? "dislikeCancel" : "dislike";
-				xhr.open("GET", `/likes?type=${type}&id=${blogID}`);
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							dislikeButton.classList.toggle("active");
+				request("GET", `/likes?type=${type}&id=${blogID}`, {}, (_response) => {
+					dislikeButton.classList.toggle("active");
 
-							if (likeButton.classList.contains("active")) {
-								likeButton.click();
-							}
-
-							location.reload();
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
+					if (likeButton.classList.contains("active")) {
+						likeButton.click();
 					}
-				};
+
+					location.reload();
+				});
 			});
 
 			window.addEventListener("load", () => {
-				const xhr = new XMLHttpRequest();
-				xhr.open("GET", "/getid");
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4 && xhr.status === 200) {
-						accountID.innerText += " " + xhr.response;
-						userID = xhr.response;
+				request("GET", "/getid", {}, (response) => {
+					accountID.innerText += " " + response;
+					userID = response;
 
-						getBlog();
-					}
-				};
+					getBlog();
+				});
 
 				function getBlog() {
-					xhr.open("post", "/read");
-					xhr.setRequestHeader("Content-Type", "application/json");
-					xhr.send(JSON.stringify({ blogID }));
-					xhr.onreadystatechange = () => {
-						if (xhr.readyState === 4) {
-							if (xhr.status === 200) {
-								const result = JSON.parse(xhr.response).result;
+					request("POST", "/read", { id: blogID }, (response) => {
+						const result = JSON.parse(response).result;
 
-								if (result === "NOT_FOUND") {
-									document.querySelector("main").innerText = "존재하지 않는 글입니다.";
-									return;
-								}
+						if (result === "NOT_FOUND") {
+							document.querySelector("main").innerText = "존재하지 않는 글입니다.";
+							return;
+						}
 
-								const { title, writerid, writedate, content, likeidarray, dislikeidarray } = result[0];
-								document.querySelector(".title").innerText = title;
-								document.querySelector(".writer-id").innerText = writerid;
-								document.querySelector(".write-date").innerText = writedate;
-								document.querySelector(".content").innerText = content;
+						const blog = result[0],
+							comments = result[1];
 
-								if (likeidarray) {
-									likeButton.innerHTML += " " + likeidarray.length;
+						const { title, writerid, writedate, content, likeidarray, dislikeidarray } = blog;
+						document.querySelector(".title").innerText = title;
+						document.querySelector(".writer-id").innerText = writerid;
+						document.querySelector(".write-date").innerText = writedate;
+						document.querySelector(".content").innerText = content;
 
-									if (likeidarray.includes(userID)) {
-										likeButton.classList.add("active");
+						if (likeidarray) {
+							likeButton.innerHTML += " " + likeidarray.length;
+
+							if (likeidarray.includes(userID)) {
+								likeButton.classList.add("active");
+							}
+						} else {
+							likeButton.innerHTML += " 0";
+						}
+
+						if (dislikeidarray) {
+							dislikeButton.innerHTML += " " + dislikeidarray.length;
+
+							if (dislikeidarray.includes(userID)) {
+								dislikeButton.classList.add("active");
+							}
+						} else {
+							dislikeButton.innerHTML += " 0";
+						}
+
+						if (userID === writerid) {
+							const deleteBlogButton = document.createElement("button");
+							deleteBlogButton.innerText = "글 삭제";
+							deleteBlogButton.addEventListener("click", () => {
+								request("GET", "/deleteBlog?id=" + blogID, {}, (response) => {
+									const result = JSON.parse(response).result;
+
+									if (result === "NOT_FOUND") {
+										alert("존재하지 않는 글입니다.");
+									} else if (result === "NOT_OP") {
+										alert("이 글의 작성자가 아닙니다.");
+									} else if (result === "SUCCESS") {
+										alert("글이 성공적으로 삭제되었습니다.");
+										location.href = "/";
 									}
-								} else {
-									likeButton.innerHTML += " 0";
-								}
+								});
+							});
 
-								if (dislikeidarray) {
-									dislikeButton.innerHTML += " " + dislikeidarray.length;
+							const updateButton = document.createElement("button");
+							updateButton.innerText = "글 수정";
+							updateButton.addEventListener(
+								"click",
+								() => (location.href = "/write?update=" + result[0].id)
+							);
 
-									if (dislikeidarray.includes(userID)) {
-										dislikeButton.classList.add("active");
-									}
-								} else {
-									dislikeButton.innerHTML += " 0";
-								}
+							document.querySelector(".buttons").append(deleteBlogButton, updateButton);
+						}
 
-								if (userID === writerid) {
-									const deleteBlogButton = document.createElement("button");
-									deleteBlogButton.innerText = "글 삭제";
-									deleteBlogButton.addEventListener("click", () => {
-										xhr.open("POST", "/deleteBlog");
-										xhr.setRequestHeader("Content-Type", "application/json");
-										xhr.send(JSON.stringify({ blogID }));
-										xhr.onreadystatechange = () => {
-											if (xhr.readyState === 4) {
-												if (xhr.status === 200) {
-													const result = JSON.parse(xhr.response).result;
-
-													if (result === "NOT_FOUND") {
-														alert("존재하지 않는 글입니다.");
-													} else if (result === "NOT_OP") {
-														alert("이 글의 작성자가 아닙니다.");
-													} else if (result === "SUCCESS") {
-														alert("글이 성공적으로 삭제되었습니다.");
-														location.href = "/";
-													}
-												} else if (xhr.status === 500) {
-													alert("서버에서 오류가 발생했습니다.");
-												}
-											}
-										};
-									});
-
-									const updateButton = document.createElement("button");
-									updateButton.innerText = "글 수정";
-									updateButton.addEventListener(
-										"click",
-										() => (location.href = "/write?update=" + result.id)
-									);
-
-									document.querySelector(".buttons").append(deleteBlogButton, updateButton);
-								}
-
-								const comments = result[1];
-								if (comments) {
-									for (let comment of comments) {
-										addComment(comment);
-									}
-								}
-							} else if (xhr.status === 500) {
-								alert("서버에서 오류가 발생했습니다.");
+						if (comments) {
+							for (let comment of comments) {
+								addComment(comment);
 							}
 						}
-					};
+					});
 				}
 
 				function addComment({ id, writerid, writedate, content }) {
@@ -272,22 +224,12 @@
 
 					const deleteButton = comment.querySelector(".delete");
 					if (writerid === userID) {
-						deleteButton.addEventListener("click", () => {
-							const xhr = new XMLHttpRequest();
-							xhr.open("POST", "/deleteComment");
-							xhr.setRequestHeader("Content-Type", "application/json");
-							xhr.send(JSON.stringify({ id }));
-							xhr.onreadystatechange = () => {
-								if (xhr.readyState === 4) {
-									if (xhr.status === 200) {
-										alert("댓글을 삭제했습니다.");
-										location.reload();
-									} else if (xhr.status === 500) {
-										alert("서버에서 오류가 발생했습니다.");
-									}
-								}
-							};
-						});
+						deleteButton.addEventListener("click", () =>
+							request("GET", "/deleteComment?id=" + id, {}, (_response) => {
+								alert("댓글을 삭제했습니다.");
+								location.reload();
+							})
+						);
 					} else {
 						deleteButton.remove();
 					}

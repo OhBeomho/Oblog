@@ -32,6 +32,7 @@
 			</form>
 		</main>
 
+		<script src="js/request.js"></script>
 		<script>
 			const submitButton = document.getElementById("submit");
 			const form = document.querySelector("form");
@@ -48,28 +49,18 @@
 					return;
 				}
 
-				const xhr = new XMLHttpRequest();
-				xhr.open("POST", "/login");
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(JSON.stringify(data));
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							const result = JSON.parse(xhr.response).result;
+				request("POST", "/login", data, (response) => {
+					const result = JSON.parse(response).result;
 
-							if (result === "ID_NOT_FOUND") {
-								alert("존재하지 않는 ID 입니다.");
-							} else if (result === "PASSWORD_INCORRECT") {
-								alert("비밀번호가 일치하지 않습니다.");
-							} else if (result === "SUCCESS") {
-								alert("로그인 되었습니다.");
-								location.href = "/";
-							}
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
+					if (result === "ID_NOT_FOUND") {
+						alert("존재하지 않는 ID 입니다.");
+					} else if (result === "PASSWORD_INCORRECT") {
+						alert("비밀번호가 일치하지 않습니다.");
+					} else if (result === "SUCCESS") {
+						alert("로그인 되었습니다.");
+						location.href = "/";
 					}
-				};
+				});
 			});
 		</script>
 	</body>

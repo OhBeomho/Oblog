@@ -62,10 +62,6 @@ button {
 	outline: none;
 }
 
-button {
-	margin: 0 5px;
-}
-
 a {
 	text-decoration: none;
 	cursor: pointer;

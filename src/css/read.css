@@ -75,6 +75,10 @@ textarea {
 	height: 60px;
 }
 
+.buttons button {
+	margin: 0 3px;
+}
+
 @media screen and (max-width: 650px) {
 	main > * {
 		width: 90%;

@@ -53,13 +53,14 @@
 			</div>
 			<hr style="background-color: gray" />
 			<div class="search">
-				<input type="search" />
-				<select id="searchType">
+				<button id="resetSearch" style="float: left">검색 초기화</button>
+				<select id="searchTypes">
 					<option value="title" selected>제목</option>
 					<option value="content">내용</option>
 					<option value="writerid">작성자</option>
 					<option value="writedate">작성 날짜</option>
 				</select>
+				<input type="search" />
 				<button id="search">검색</button>
 			</div>
 			<ul id="list"></ul>
@@ -72,6 +73,7 @@
 			Source on <a href="https://github.com/OhBeomho/Oblog">Github</a>.
 		</footer>
 
+		<script src="js/request.js"></script>
 		<script>
 			const loadButton = document.getElementById("loadMore");
 			const blogList = document.getElementById("list");
@@ -81,62 +83,49 @@
 			const deleteButton = document.getElementById("delete");
 			const searchField = document.querySelector("input[type='search']");
 			const searchButton = document.getElementById("search");
+			const resetSearchButton = document.getElementById("resetSearch");
+			const searchTypes = document.getElementById("searchTypes");
 
 			const blogs = [];
 
 			loadButton.addEventListener("click", loadBlogs);
 			window.addEventListener("load", () => {
-				const xhr = new XMLHttpRequest();
-				xhr.open("GET", "/getid");
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4 && xhr.status === 200) {
-						accountID.innerText += " " + xhr.response;
-						accountDialog.querySelector("#id").innerText = xhr.response;
-					}
-				};
+				request("GET", "/getid", {}, (response) => {
+					accountID.innerText += " " + response;
+					accountDialog.querySelector("#id").innerText = response;
+				});
 
 				loadBlogs();
 			});
 
 			accountID.addEventListener("click", () => accountDialog.showModal());
 			accountDialog.querySelector(".close").addEventListener("click", () => accountDialog.close());
-			logoutButton.addEventListener("click", () => {
-				const xhr = new XMLHttpRequest();
-				xhr.open("GET", "/logout");
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							alert("로그아웃 되었습니다.");
-							location.href = "/login";
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
-					}
-				};
-			});
+			logoutButton.addEventListener("click", () =>
+				request("GET", "/logout", {}, (_response) => {
+					alert("로그아웃 되었습니다.");
+					location.href = "/login";
+				})
+			);
 			deleteButton.addEventListener("click", () => {
 				if (confirm("정말로 계정을 삭제하시겠습니까?")) {
-					const xhr = new XMLHttpRequest();
-					xhr.open("GET", "/delete");
-					xhr.send();
-					xhr.onreadystatechange = () => {
-						if (xhr.readyState === 4) {
-							if (xhr.status === 200) {
-								alert("계정이 삭제 되었습니다.");
-								location.href = "/login";
-							} else if (xhr.status === 500) {
-								alert("서버에서 오류가 발생했습니다.");
-							}
-						}
-					};
+					request("GET", "/delete", {}, (_response) => {
+						alert("계정이 삭제 되었습니다.");
+						location.href = "/login";
+					});
 				}
 			});
 			searchButton.addEventListener("click", () => searchBlog(searchField.value.trim()));
 			searchField.addEventListener("keydown", (e) => {
 				if (e.key === "Enter" && !e.repeat) {
 					searchBlog(searchField.value.trim());
+				}
+			});
+			resetSearchButton.addEventListener("click", () => {
+				searchTypes.selectedIndex = 0;
+				searchField.value = "";
+
+				for (let blog of blogs) {
+					addBlog(blog);
 				}
 			});
 
@@ -152,7 +141,6 @@
 						<span class="write-date">${writedate}</span>
 					</a>
 				`;
-
 				blogList.appendChild(blog);
 			}
 
@@ -160,14 +148,14 @@
 				blogList.innerHTML = "";
 
 				if (!text) {
-					for (let blog of blogs.reverse()) {
+					for (let blog of blogs) {
 						addBlog(blog);
 					}
+
 					return;
 				}
 
-				const searchType = document.getElementById("searchType").value;
-				const searchResult = blogs.reverse().filter((blog) => blog[searchType].includes(text));
+				const searchResult = blogs.filter((blog) => blog[searchTypes.value].includes(text));
 
 				for (let blog of searchResult) {
 					addBlog(blog);
@@ -175,30 +163,14 @@
 			}
 
 			function loadBlogs() {
-				const xhr = new XMLHttpRequest();
-				xhr.open("POST", "/blogs");
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(
-					JSON.stringify({
-						offset: blogs.length,
-						count: BLOGS_PER_LOAD
-					})
-				);
+				request("POST", "/blogs", { offset: blogs.length, count: BLOGS_PER_LOAD }, (response) => {
+					const result = JSON.parse(response).result;
 
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							const result = JSON.parse(xhr.response).result;
-
-							for (let blog of result) {
-								addBlog(blog);
-								blogs.push(({ title, writerid, writedate, id } = blog));
-							}
-						} else if (xhr.status === 500) {
-							alert("블로그를 불러오던 중 오류 발생");
-						}
+					for (let blog of result) {
+						addBlog(blog);
+						blogs.push(({ title, writerid, writedate, id } = blog));
 					}
-				};
+				});
 			}
 		</script>
 	</body>

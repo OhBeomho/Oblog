@@ -28,7 +28,7 @@
 				</div>
 				<div>
 					<button type="button" id="write">글쓰기</button>
-					<button type="button" onclick="location.href = '/'">취소</button>
+					<button type="button" id="cancel">취소</button>
 				</div>
 			</form>
 		</main>
@@ -37,54 +37,45 @@
 			Source on <a href="https://github.com/OhBeomho/Oblog">Github</a>.
 		</footer>
 
+		<script src="js/request.js"></script>
 		<script>
 			const accountID = document.getElementById("accountID");
 			const writeButton = document.getElementById("write");
+			const cancelButton = document.getElementById("cancel");
 			const form = document.querySelector("form");
 			let userID;
 
 			const updateBlog = new URL(location.href).searchParams.get("update");
 			if (updateBlog) {
-				const xhr = new XMLHttpRequest();
-				xhr.open("POST", "/read");
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(JSON.stringify({ blogID: updateBlog }));
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							const result = JSON.parse(xhr.response).result;
+				request("POST", "/read", { id: updateBlog }, (response) => {
+					const result = JSON.parse(response).result;
 
-							if (result === "NOT_FOUND") {
-								alert("존재하지 않는 글입니다.");
-							} else if (result.writerid !== userID) {
-								alert("이 글의 작성자가 아닙니다.");
-							} else {
-								form.querySelector("input[name='title']").value = result.title;
-								form.querySelector("textarea[name='content']").value = result.content;
-								writeButton.innerText = "수정하기";
-								return;
-							}
-
-							location.href = "/";
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-							location.href = "/";
-						}
+					if (result === "NOT_FOUND") {
+						alert("존재하지 않는 글입니다.");
+						return;
 					}
-				};
+
+					const blog = result[0];
+
+					if (blog.writerid !== userID) {
+						alert("이 글의 작성자가 아닙니다.");
+					} else {
+						form.querySelector("input[name='title']").value = blog.title;
+						form.querySelector("textarea[name='content']").value = blog.content;
+						writeButton.innerText = "수정하기";
+						return;
+					}
+
+					location.href = "/";
+				});
 			}
 
-			window.addEventListener("load", () => {
-				const xhr = new XMLHttpRequest();
-				xhr.open("GET", "/getid");
-				xhr.send();
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4 && xhr.status === 200) {
-						accountID.innerText += " " + xhr.response;
-						userID = xhr.response;
-					}
-				};
-			});
+			window.addEventListener("load", () =>
+				request("GET", "/getid", {}, (response) => {
+					accountID.innerText += " " + response;
+					userID = response;
+				})
+			);
 
 			writeButton.addEventListener("click", () => {
 				const data = {};
@@ -95,26 +86,17 @@
 					data.id = updateBlog;
 				}
 
-				const xhr = new XMLHttpRequest();
-				xhr.open("POST", url);
-				xhr.setRequestHeader("Content-Type", "application/json");
-				xhr.send(JSON.stringify(data));
-				xhr.onreadystatechange = () => {
-					if (xhr.readyState === 4) {
-						if (xhr.status === 200) {
-							if (url === "/update") {
-								alert("글을 수정했습니다.");
-							} else {
-								alert("글이 올려졌습니다.");
-							}
-
-							location.href = "/";
-						} else if (xhr.status === 500) {
-							alert("서버에서 오류가 발생했습니다.");
-						}
+				request("POST", url, data, (_response) => {
+					if (url === "/update") {
+						alert("글을 수정했습니다.");
+					} else {
+						alert("글이 올려졌습니다.");
 					}
-				};
+
+					location.href = "/read?id=" + updateBlog;
+				});
 			});
+			cancelButton.addEventListener("click", () => (location.href = "/read?id=" + updateBlog));
 		</script>
 	</body>
 </html>
