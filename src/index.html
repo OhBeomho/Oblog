@@ -123,6 +123,7 @@
 			resetSearchButton.addEventListener("click", () => {
 				searchTypes.selectedIndex = 0;
 				searchField.value = "";
+				blogList.innerHTML = "";
 
 				for (let blog of blogs) {
 					addBlog(blog);
