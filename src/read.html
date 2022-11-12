@@ -123,11 +123,22 @@
 						const blog = result[0],
 							comments = result[1];
 
-						const { title, writerid, writedate, content, likeidarray, dislikeidarray } = blog;
+						const { title, writerid, writedate, content, likeidarray, dislikeidarray, mod } = blog;
 						document.querySelector(".title").innerText = title;
 						document.querySelector(".writer-id").innerText = writerid;
 						document.querySelector(".write-date").innerText = writedate;
 						document.querySelector(".content").innerText = content;
+
+						const owner = writerid === "OhBeomho";
+
+						if (mod) {
+							document.querySelector(".writer-id").style.fontWeight = "bold";
+							document.querySelector(
+								".writer-id"
+							).innerHTML += `<span style='font-weight: normal; color: ${
+								owner ? "rgb(200, 200, 0)" : "rgb(200, 0, 0)"
+							}'> ${owner ? "OWNER" : "MOD"}</span>`;
+						}
 
 						if (likeidarray) {
 							likeButton.innerHTML += " " + likeidarray.length;
@@ -156,7 +167,7 @@
 								if (confirm("정말로 이 글을 삭제하시겠습니까?")) {
 									request("GET", "/deleteBlog?id=" + blogID, {}, (response) => {
 										const result = JSON.parse(response).result;
-	
+
 										if (result === "NOT_FOUND") {
 											alert("존재하지 않는 글입니다.");
 										} else if (result === "NOT_OP") {
@@ -187,7 +198,7 @@
 					});
 				}
 
-				function addComment({ id, writerid, writedate, content }) {
+				function addComment({ id, writerid, writedate, content, mod }) {
 					const comment = document.createElement("li");
 					comment.className = "comment";
 					comment.innerHTML = `
@@ -221,6 +232,15 @@
 						<div class="c-content">${content}</div>
 						<hr />
 					`;
+
+					const owner = writerid === "OhBeomho";
+
+					if (mod) {
+						comment.querySelector(".c-writer-id").style.fontWeight = "bold";
+						comment.querySelector(".c-writer-id").innerHTML += `<span style='font-weight: normal; color: ${
+							owner ? "rgb(200, 200, 0)" : "rgb(200, 0, 0)"
+						}'> ${owner ? "OWNER" : "MOD"}</span>`;
+					}
 
 					commentList.appendChild(comment);
 

@@ -132,7 +132,7 @@
 
 			const BLOGS_PER_LOAD = 20;
 
-			function addBlog({ title, writerid, writedate, id }) {
+			function addBlog({ title, writerid, writedate, id, mod }) {
 				const blog = document.createElement("li");
 				blog.className = "blog";
 				blog.innerHTML = `
@@ -142,6 +142,16 @@
 						<span class="write-date">${writedate}</span>
 					</a>
 				`;
+
+				const owner = writerid === "OhBeomho";
+
+				if (mod) {
+					blog.querySelector(".writer-id").style.fontWeight = "bold";
+					blog.querySelector(".writer-id").innerHTML += `<span style='font-weight: normal; color: ${
+						owner ? "rgb(200, 200, 0)" : "rgb(200, 0, 0)"
+					}'> ${owner ? "OWNER" : "MOD"}</span>`;
+				}
+
 				blogList.appendChild(blog);
 			}
 
@@ -169,7 +179,7 @@
 
 					for (let blog of result) {
 						addBlog(blog);
-						blogs.push(({ title, writerid, writedate, id } = blog));
+						blogs.push(({ title, writerid, writedate, id, mod } = blog));
 					}
 				});
 			}

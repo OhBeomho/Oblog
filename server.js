@@ -26,12 +26,12 @@ db.connect((err) => {
 	console.log("Connected to database.");
 
 	db.query(
-		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerId TEXT NOT NULL, writeDate TEXT NOT NULL, content TEXT NOT NULL, likeIDArray TEXT[] DEFAULT '{}', dislikeIDArray TEXT[] DEFAULT '{}')",
+		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerId TEXT NOT NULL, writeDate TEXT NOT NULL, content TEXT NOT NULL, likeIDArray TEXT[] DEFAULT '{}', dislikeIDArray TEXT[] DEFAULT '{}', mod BOOLEAN DEFAULT FALSE)",
 		checkError
 	);
-	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL)", checkError);
+	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)", checkError);
 	db.query(
-		"CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL)",
+		"CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)",
 		checkError
 	);
 
@@ -242,36 +242,50 @@ app.post("/write", (req, res) => {
 	const id = req.session.user;
 	const date = getDate();
 
-	db.query(
-		"INSERT INTO blog(title, content, writerId, writeDate) VALUES($1, $2, $3, $4)",
-		[title, content, id, date],
-		(err) => {
-			if (err) {
-				console.error(err.message);
-				res.sendStatus(500);
-			} else {
-				res.sendStatus(200);
-			}
+	db.query("SELECT mod FROM account WHERE id = $1", [id], (err, result) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
 		}
-	);
+
+		db.query(
+			"INSERT INTO blog(title, content, writerId, writeDate, mod) VALUES($1, $2, $3, $4, $5)",
+			[title, content, id, date, result.rows[0].mod],
+			(err) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+				} else {
+					res.sendStatus(200);
+				}
+			}
+		);
+	});
 });
 app.post("/comment", (req, res) => {
 	const { content, blogID } = req.body;
 	const id = req.session.user;
 	const date = getDate();
 
-	db.query(
-		"INSERT INTO comment(blogID, content, writeDate, writerId) VALUES($1, $2, $3, $4)",
-		[blogID, content, date, id],
-		(err) => {
-			if (err) {
-				console.error(err.message);
-				res.sendStatus(500);
-			} else {
-				res.sendStatus(200);
-			}
+	db.query("SELECT mod FROM account WHERE id = $1", [id], (err, result) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
 		}
-	);
+
+		db.query(
+			"INSERT INTO comment(blogID, content, writeDate, writerId, mod) VALUES($1, $2, $3, $4, $5)",
+			[blogID, content, date, id, result.rows[0].mod],
+			(err) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+				} else {
+					res.sendStatus(200);
+				}
+			}
+		);
+	});
 });
 app.post("/update", (req, res) => {
 	const { title, content, id } = req.body;
