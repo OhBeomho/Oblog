@@ -153,18 +153,20 @@
 							const deleteBlogButton = document.createElement("button");
 							deleteBlogButton.innerText = "글 삭제";
 							deleteBlogButton.addEventListener("click", () => {
-								request("GET", "/deleteBlog?id=" + blogID, {}, (response) => {
-									const result = JSON.parse(response).result;
-
-									if (result === "NOT_FOUND") {
-										alert("존재하지 않는 글입니다.");
-									} else if (result === "NOT_OP") {
-										alert("이 글의 작성자가 아닙니다.");
-									} else if (result === "SUCCESS") {
-										alert("글이 성공적으로 삭제되었습니다.");
-										location.href = "/";
-									}
-								});
+								if (confirm("정말로 이 글을 삭제하시겠습니까?")) {
+									request("GET", "/deleteBlog?id=" + blogID, {}, (response) => {
+										const result = JSON.parse(response).result;
+	
+										if (result === "NOT_FOUND") {
+											alert("존재하지 않는 글입니다.");
+										} else if (result === "NOT_OP") {
+											alert("이 글의 작성자가 아닙니다.");
+										} else if (result === "SUCCESS") {
+											alert("글이 성공적으로 삭제되었습니다.");
+											location.href = "/";
+										}
+									});
+								}
 							});
 
 							const updateButton = document.createElement("button");

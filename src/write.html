@@ -86,14 +86,22 @@
 					data.id = updateBlog;
 				}
 
+				if (!data.title) {
+					alert("제목을 입력해 주세요.");
+					return;
+				} else if (!data.content) {
+					alert("내용을 입력해 주세요.");
+					return;
+				}
+
 				request("POST", url, data, (_response) => {
 					if (url === "/update") {
 						alert("글을 수정했습니다.");
+						location.href = "/read?id=" + updateBlog;
 					} else {
 						alert("글이 올려졌습니다.");
+						location.href = "/";
 					}
-
-					location.href = "/read?id=" + updateBlog;
 				});
 			});
 			cancelButton.addEventListener("click", () => (location.href = "/read?id=" + updateBlog));

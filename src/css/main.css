@@ -62,6 +62,50 @@ button {
 	outline: none;
 }
 
+input,
+button,
+select {
+	transition: box-shadow 0.1s ease-out;
+}
+
+input {
+	border: 0;
+	border-bottom: 1.5px solid rgb(60, 60, 60);
+}
+
+input:hover {
+	box-shadow: 0 2px 0 0 rgba(60, 60, 60, 0.5);
+}
+
+input:focus {
+	box-shadow: 0 1.5px 0 0 rgb(60, 60, 60);
+}
+
+button {
+	padding: 5px;
+	border: 0;
+	background-color: rgb(40, 40, 40);
+	color: white;
+}
+
+button:hover,
+select:hover {
+	box-shadow: 0.5px 1.5px 0 0.5px rgba(60, 60, 60, 0.5);
+	background-color: rgb(80, 80, 80);
+}
+
+button:active {
+	background-color: rgb(100, 100, 100);
+}
+
+select {
+	padding: 3px;
+	outline: none;
+	border: 0;
+	background-color: rgb(40, 40, 40);
+	color: white;
+}
+
 a {
 	text-decoration: none;
 	cursor: pointer;

@@ -26,14 +26,20 @@ hr {
 	background-color: gray;
 }
 
+
+#like,
+#dislike {
+	border: 1px solid;
+	background-color: transparent;
+}
+
 #like {
 	color: red;
 }
 
 #like.active {
-	border-color: rgba(255, 0, 0, 0.7);
-	border-radius: 3px;
-	border-width: 1.5px;
+	border: 1.5px solid rgba(255, 0, 0, 0.7);
+	background-color: rgba(255, 0, 0, 0.2);
 }
 
 #dislike {
@@ -41,9 +47,8 @@ hr {
 }
 
 #dislike.active {
-	border-color: rgba(0, 60, 255, 0.7);
-	border-radius: 3px;
-	border-width: 1.5px;
+	border: 1.5px solid rgba(0, 60, 255, 0.7);
+	background: rgba(0, 60, 255, 0.2);
 }
 
 #commentList {
