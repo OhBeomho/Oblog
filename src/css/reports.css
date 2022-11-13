@@ -58,3 +58,7 @@ ul {
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+
+#reportDialog .user {
+	font-weight: bold;
+}
