@@ -72,8 +72,9 @@
 
 			window.addEventListener("load", () =>
 				request("GET", "/getid", {}, (response) => {
-					accountID.innerText += " " + response;
-					userID = response;
+					const result = JSON.parse(response);
+					accountID.innerText += " " + result.id;
+					userID = result.id;
 				})
 			);
 

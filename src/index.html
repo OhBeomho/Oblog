@@ -15,7 +15,7 @@
 				<div>
 					<a href="/" class="active">블로그</a>
 					<a href="/write">글쓰기</a>
-					<a id="accountID">로그인된 ID:</a>
+					<a id="accountID" onclick="accountDialog.showModal()">로그인된 ID:</a>
 				</div>
 			</nav>
 		</header>
@@ -40,18 +40,18 @@
 				</svg>
 				<span id="id"></span>
 			</div>
-			<div style="margin: 20px 0">
+			<div style="margin: 20px 0" class="buttons">
 				<button id="logout">로그아웃</button>
 				<button id="delete">계정 삭제</button>
 			</div>
-			<button class="close">닫기</button>
+			<button onclick="accountDialog.close()">닫기</button>
 		</dialog>
 		<main>
 			<div>
 				<h1>블로그 홈</h1>
 				Oblog 에 올라온 글들입니다.
 			</div>
-			<hr style="background-color: gray" />
+			<hr />
 			<div class="search">
 				<button id="resetSearch" style="float: left">검색 초기화</button>
 				<select id="searchTypes">
@@ -65,7 +65,7 @@
 			</div>
 			<ul id="list"></ul>
 			<div>
-				<button id="loadMore">더 보기</button>
+				<button onclick="loadBlogs()">더 보기</button>
 			</div>
 		</main>
 		<footer>
@@ -75,7 +75,6 @@
 
 		<script src="js/request.js"></script>
 		<script>
-			const loadButton = document.getElementById("loadMore");
 			const blogList = document.getElementById("list");
 			const accountID = document.getElementById("accountID");
 			const accountDialog = document.getElementById("accountDialog");
@@ -88,18 +87,25 @@
 
 			const blogs = [];
 
-			loadButton.addEventListener("click", loadBlogs);
 			window.addEventListener("load", () => {
 				request("GET", "/getid", {}, (response) => {
-					accountID.innerText += " " + response;
-					accountDialog.querySelector("#id").innerText = response;
+					const result = JSON.parse(response);
+
+					accountID.innerText += " " + result.id;
+					accountDialog.querySelector("#id").innerText = result.id;
+
+					if (result.mod) {
+						const reportsButton = document.createElement("button");
+						reportsButton.innerText = "신고 목록";
+						reportsButton.addEventListener("click", () => (location.href = "/reports"));
+
+						accountDialog.querySelector(".buttons").appendChild(reportsButton);
+					}
 				});
 
 				loadBlogs();
 			});
 
-			accountID.addEventListener("click", () => accountDialog.showModal());
-			accountDialog.querySelector(".close").addEventListener("click", () => accountDialog.close());
 			logoutButton.addEventListener("click", () =>
 				request("GET", "/logout", {}, (_response) => {
 					alert("로그아웃 되었습니다.");

@@ -22,11 +22,6 @@ main > * {
 	font-weight: bold;
 }
 
-hr {
-	background-color: gray;
-}
-
-
 #like,
 #dislike {
 	border: 1px solid;

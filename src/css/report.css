@@ -1,0 +1,7 @@
+.user::before {
+	content: "신고 대상: ";
+}
+
+textarea {
+	margin-top: 5px;
+}

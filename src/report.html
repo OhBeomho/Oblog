@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/report.css" />
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="/" class="brand">Oblog</a>
+				<div>
+					<a href="/">블로그</a>
+					<a href="/write">글쓰기</a>
+					<a id="accountID">로그인된 ID:</a>
+				</div>
+			</nav>
+		</header>
+		<main>
+			<form>
+				<h2>신고하기</h2>
+				<div class="user"></div>
+				<textarea name="reason"></textarea>
+				<button type="button" id="report">신고하기</button>
+				<button type="button" onclick="location.href = '/'">취소</button>
+			</form>
+		</main>
+
+		<script src="js/request.js"></script>
+		<script>
+			const accountID = document.getElementById("accountID");
+			const reportButton = document.getElementById("report");
+			const userid = new URL(location.href).searchParams.get("user");
+
+			reportButton.addEventListener("click", () => {
+				const reason = new FormData(document.querySelector("form")).get("reason");
+				if (!reason.trim()) {
+					alert("신고 사유를 입력해 주세요.");
+				}
+
+				request("POST", "/report", { userid, reason }, (_response) => {
+					alert("정상적으로 신고 되었습니다.");
+					location.href = "/";
+				});
+			});
+
+			window.addEventListener("load", () => {
+				document.querySelector(".user").innerText = userid;
+
+				request("GET", "/getid", {}, (response) => {
+					const result = JSON.parse(response);
+					accountID.innerText += " " + result.id;
+				});
+			});
+		</script>
+	</body>
+</html>

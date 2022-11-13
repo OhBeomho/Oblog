@@ -55,6 +55,9 @@
 				} else if (!uniqueID) {
 					alert("ID 중복확인을 해주세요.");
 					return;
+				} else if (data.id.length > 20) {
+					alert("ID 는 20자 이내로 입력해 주세요.");
+					return;
 				}
 
 				request("POST", "/signup", data, (_response) => {

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>신고 목록</title>
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/reports.css" />
+	</head>
+	<body>
+		<header>
+			<nav>
+				<a href="/" class="brand">Oblog</a>
+				<div>
+					<a href="/">블로그</a>
+					<a href="/write">글쓰기</a>
+					<a id="accountID">로그인된 ID:</a>
+				</div>
+			</nav>
+		</header>
+		<dialog id="reportDialog">
+			<h2 class="reporter"></h2>
+			<div class="user"></div>
+			<div class="reason"></div>
+			<button onclick="reportDialog.close()">닫기</button>
+		</dialog>
+		<main>
+			<div>
+				<h1>신고 목록</h1>
+			</div>
+			<hr />
+			<ul id="list"></ul>
+			<div>
+				<button onclick="loadReports()">더 보기</button>
+			</div>
+		</main>
+
+		<script src="js/request.js"></script>
+		<script>
+			const accountID = document.getElementById("accountID");
+			const reportDialog = document.getElementById("reportDialog");
+			const reportList = document.getElementById("list");
+
+			let reportCount = 0;
+			const REPORTS_PER_LOAD = 20;
+
+			window.addEventListener("load", () => {
+				request("GET", "/getid", {}, (response) => {
+					const result = JSON.parse(response);
+					accountID.innerText += " " + result.id;
+				});
+
+				loadReports();
+			});
+
+			function loadReports() {
+				request("POST", "/reports", { count: REPORTS_PER_LOAD, offset: reportCount }, (response) => {
+					const reports = JSON.parse(response).result;
+					reportCount += reports.length;
+
+					for (let report of reports) {
+						addReport(report);
+					}
+				});
+			}
+
+			function addReport({ id, userid, reporterid, reason }) {
+				const report = document.createElement("li");
+				report.className = "report";
+				report.innerHTML = `
+					<div>
+						<span class="reporter">${reporterid}</span>
+						<span class="user">${userid}</span>
+					</div>
+					<button id="delete">삭제</button>
+				`;
+				report.querySelector("div").addEventListener("click", () => {
+					reportDialog.querySelector(".reporter").innerText = reporterid;
+					reportDialog.querySelector(".user").innerText = userid;
+					reportDialog.querySelector(".reason").innerText = reason;
+					reportDialog.showModal();
+				});
+				report
+					.querySelector("#delete")
+					.addEventListener("click", () =>
+						request("GET", "/deleteReport?id=" + id, {}, (_response) => location.reload())
+					);
+
+				reportList.appendChild(report);
+			}
+		</script>
+	</body>
+</html>

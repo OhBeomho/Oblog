@@ -3,24 +3,6 @@ form div {
 	width: 600px;
 }
 
-form textarea {
-	resize: none;
-	outline: none;
-	border: 1.5px solid rgb(40, 40, 40);
-	width: calc(100% - 10px);
-	height: 300px;
-	padding: 5px;
-	transition: box-shadow 0.1s ease-out;
-}
-
-form textarea:hover {
-	box-shadow: 0 0 0 2px rgba(60, 60, 60, 0.5);
-}
-
-form textarea:focus {
-	box-shadow: 0 0 0 1.5px rgb(40, 40, 40);
-}
-
 @media screen and (max-width: 650px) {
 	form div {
 		width: 90%;

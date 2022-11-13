@@ -26,13 +26,19 @@ db.connect((err) => {
 	console.log("Connected to database.");
 
 	db.query(
-		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerId TEXT NOT NULL, writeDate TEXT NOT NULL, content TEXT NOT NULL, likeIDArray TEXT[] DEFAULT '{}', dislikeIDArray TEXT[] DEFAULT '{}', mod BOOLEAN DEFAULT FALSE)",
+		"CREATE TABLE IF NOT EXISTS blog(id SERIAL PRIMARY KEY, title TEXT NOT NULL, writerid TEXT NOT NULL, writedate TEXT NOT NULL, content TEXT NOT NULL, likeidArray TEXT[] DEFAULT '{}', dislikeidArray TEXT[] DEFAULT '{}', mod BOOLEAN DEFAULT FALSE)",
 		checkError
 	);
-	db.query("CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)", checkError);
 	db.query(
-		"CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogID INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerId TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)",
+		"CREATE TABLE IF NOT EXISTS account(id TEXT PRIMARY KEY, password TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)",
 		checkError
+	);
+	db.query(
+		"CREATE TABLE IF NOT EXISTS comment(id SERIAL PRIMARY KEY, blogid INTEGER NOT NULL, content TEXT NOT NULL, writeDate TEXT NOT NULL, writerid TEXT NOT NULL, mod BOOLEAN DEFAULT FALSE)",
+		checkError
+	);
+	db.query(
+		"CREATE TABLE IF NOT EXISTS report(id SERIAL PRIMARY KEY, userid TEXT NOT NULL, reporterid TEXT NOT NULL, reason TEXT NOT NULL)"
 	);
 
 	console.log("Initialized database.");
@@ -72,6 +78,26 @@ app.get("/read", (req, res) => {
 		res.redirect("/login");
 	}
 });
+app.get("/report", (req, res) => {
+	if (req.session.user) {
+		res.sendFile(path.join(__dirname, "src", "report.html"));
+	} else {
+		res.redirect("/login");
+	}
+});
+app.get("/reports", (req, res) => {
+	if (req.session.user) {
+		checkMod(req.session.user).then((mod) => {
+			if (mod) {
+				res.sendFile(path.join(__dirname, "src", "reports.html"));
+			} else {
+				res.sendStatus(423);
+			}
+		});
+	} else {
+		res.redirect("/login");
+	}
+});
 app.get("/logout", (req, res) => {
 	if (req.session.user) {
 		req.session.destroy((err) => {
@@ -91,13 +117,16 @@ app.get("/delete", (req, res) => {
 			if (err) {
 				console.error(err.message);
 				res.sendStatus(500);
+				return;
 			}
 
 			res.redirect("/logout");
 		});
 	}
 });
-app.get("/getid", (req, res) => res.send(req.session.user));
+app.get("/getid", (req, res) =>
+	checkMod(req.session.user).then((mod) => res.send(JSON.stringify({ id: req.session.user, mod })))
+);
 app.get("/likes", (req, res) => {
 	if (req.session.user) {
 		const type = req.query.type;
@@ -180,6 +209,27 @@ app.get("/deleteBlog", (req, res) => {
 		});
 	}
 });
+app.get("/deleteReport", (req, res) => {
+	if (req.session.user) {
+		const { id } = req.query;
+
+		checkMod(req.session.user).then((mod) => {
+			if (!mod) {
+				res.sendStatus(423);
+				return;
+			}
+
+			db.query("DELETE FROM report WHERE id = $1", [id], (err) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+				} else {
+					res.sendStatus(200);
+				}
+			});
+		});
+	}
+});
 app.get("/idcheck", (req, res) => {
 	const { id } = req.query;
 
@@ -242,15 +292,10 @@ app.post("/write", (req, res) => {
 	const id = req.session.user;
 	const date = getDate();
 
-	db.query("SELECT mod FROM account WHERE id = $1", [id], (err, result) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		}
-
+	checkMod(id).then((mod) =>
 		db.query(
 			"INSERT INTO blog(title, content, writerId, writeDate, mod) VALUES($1, $2, $3, $4, $5)",
-			[title, content, id, date, result.rows[0].mod],
+			[title, content, id, date, mod],
 			(err) => {
 				if (err) {
 					console.error(err.message);
@@ -259,23 +304,18 @@ app.post("/write", (req, res) => {
 					res.sendStatus(200);
 				}
 			}
-		);
-	});
+		)
+	);
 });
 app.post("/comment", (req, res) => {
 	const { content, blogID } = req.body;
 	const id = req.session.user;
 	const date = getDate();
 
-	db.query("SELECT mod FROM account WHERE id = $1", [id], (err, result) => {
-		if (err) {
-			console.error(err.message);
-			res.sendStatus(500);
-		}
-
+	checkMod(id).then((mod) =>
 		db.query(
 			"INSERT INTO comment(blogID, content, writeDate, writerId, mod) VALUES($1, $2, $3, $4, $5)",
-			[blogID, content, date, id, result.rows[0].mod],
+			[blogID, content, date, id, mod],
 			(err) => {
 				if (err) {
 					console.error(err.message);
@@ -284,24 +324,20 @@ app.post("/comment", (req, res) => {
 					res.sendStatus(200);
 				}
 			}
-		);
-	});
+		)
+	);
 });
 app.post("/update", (req, res) => {
 	const { title, content, id } = req.body;
 
-	db.query(
-		"UPDATE blog SET title = $1, content = $2 WHERE id = $3",
-		[title, content, id],
-		(err) => {
-			if (err) {
-				console.error(err.message);
-				res.sendStatus(500);
-			} else {
-				res.sendStatus(200);
-			}
+	db.query("UPDATE blog SET title = $1, content = $2 WHERE id = $3", [title, content, id], (err) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+		} else {
+			res.sendStatus(200);
 		}
-	);
+	});
 });
 app.post("/read", (req, res) => {
 	const { id } = req.body;
@@ -334,23 +370,63 @@ app.post("/read", (req, res) => {
 app.post("/blogs", (req, res) => {
 	const { offset, count } = req.body;
 
-	db.query(
-		"SELECT * FROM blog ORDER BY id DESC LIMIT $1 OFFSET $2",
-		[count, offset],
-		(err, result) => {
-			if (err) {
-				console.error(err.message);
-				res.sendStatus(500);
+	db.query("SELECT * FROM blog ORDER BY id DESC LIMIT $1 OFFSET $2", [count, offset], (err, result) => {
+		if (err) {
+			console.error(err.message);
+			res.sendStatus(500);
+			return;
+		}
+
+		res.send(JSON.stringify({ result: result.rows }));
+	});
+});
+app.post("/reports", (req, res) => {
+	if (req.session.user) {
+		const { offset, count } = req.body;
+
+		checkMod(req.session.user).then((mod) => {
+			if (!mod) {
+				res.sendStatus(423);
 				return;
 			}
 
-			res.send(JSON.stringify({ result: result.rows }));
+			db.query("SELECT * FROM report ORDER BY id DESC LIMIT $1 OFFSET $2", [count, offset], (err, result) => {
+				if (err) {
+					console.error(err.message);
+					res.sendStatus(500);
+					return;
+				}
+
+				res.send(JSON.stringify({ result: result.rows }));
+			});
+		});
+	}
+});
+app.post("/report", (req, res) => {
+	const { userid, reason } = req.body;
+	const reporterid = req.session.user;
+
+	db.query(
+		"INSERT INTO report(userid, reporterid, reason) VALUES($1, $2, $3)",
+		[userid, reporterid, reason],
+		(err) => {
+			if (err) {
+				console.error(err.message);
+				res.sendStatus(500);
+			} else {
+				res.sendStatus(200);
+			}
 		}
 	);
 });
 
 function getDate() {
 	return new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+}
+
+async function checkMod(id) {
+	const result = await db.query("SELECT mod FROM account WHERE id = $1", [id]);
+	return result.rows[0].mod;
 }
 
 app.use(express.static("src"));
