@@ -29,7 +29,9 @@ router
 		Account.login(id, password)
 			.then(() => {
 				req.session.user = id
-				res.redirect("../")
+
+				const { return_url = ".." } = req.query
+				res.redirect(return_url)
 			})
 			.catch((err) => res.render("error", { err }))
 	})

@@ -34,7 +34,7 @@ router.get("/delete/:id", (req, res) => {
 	const { id } = req.params
 
 	Blog.delete(id)
-		.then(() => res.redirect("../"))
+		.then(() => res.redirect(".."))
 		.catch((err) => res.render("error", { err }))
 })
 router.post("/comment", (req, res) => {
@@ -58,6 +58,6 @@ router.get("/comment_delete/:id", (req, res) => {
 	const { id } = req.params
 
 	Comment.delete(id)
-		.then(() => res.redirect("../"))
+		.then(() => res.redirect(".."))
 		.catch((err) => res.render("error", { err }))
 })
