@@ -27,7 +27,10 @@ router
 		const { id, password } = req.body
 
 		Account.login(id, password)
-			.then(() => res.redirect("../"))
+			.then(() => {
+				req.session.user = id
+				res.redirect("../")
+			})
 			.catch((err) => res.render("error", { err }))
 	})
 router
@@ -36,7 +39,25 @@ router
 	.post((req, res) => {
 		const { id, password } = req.body
 
+		if (id.length < 3 || id.length > 20) {
+			res.render("error", { err: "ID는 3자 이상 20자 이하여야 합니다." })
+			return
+		} else if (password.length < 4) {
+			res.render("error", { err: "비밀번호는 4자 이상이여야 합니다." })
+			return
+		}
+
 		Account.sign_up(id, password)
 			.then(() => res.redirect("/login"))
 			.catch((err) => res.render("error", { err }))
 	})
+router.get("/logout", (req, res) => {
+	if (req.session.user) req.session.destroy()
+
+	res.redirect("/login")
+})
+router.get("/delete", (req, res) => {
+	if (req.session.user) Account.delete(req.session.user).catch((err) => res.render("error", { err }))
+
+	res.redirect("/logout")
+})
