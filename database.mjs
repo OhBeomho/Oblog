@@ -38,8 +38,11 @@ export class Account {
 	}
 
 	static async sign_up(id, password) {
-		await account_db.query("INSERT INTO account(id, password, join_date) VALUES($1, $2, TO_DATE($3, 'YYYY. MM. DD.'))",
-			[id, password, new Date().toLocaleDateString("ko-KR")])
+		await account_db.query("INSERT INTO account(id, password, join_date) VALUES($1, $2, $3)", [
+			id,
+			password,
+			new Date()
+		])
 	}
 
 	static async id_check(id) {
@@ -47,7 +50,7 @@ export class Account {
 	}
 
 	static async get(id) {
-		const { rows: account_rows } = await account_db.query("SELECT id, CAST(join_date AS TEXT) WHERE id = $1", [id])
+		const { rows: account_rows } = await account_db.query("SELECT id, join_date WHERE id = $1", [id])
 		const { rows: blog_count_rows } = await db.query("SELECT COUNT(*) WHERE writer_id = $1", [id])
 
 		const account = account_rows[0]
@@ -62,21 +65,43 @@ export class Account {
 }
 
 export class Blog {
-	static async write(user_id, title, content) {}
+	static async write(user_id, title, content) {
+		await db.query("INSERT INTO blog(writer_id, title, content, write_date) VALUES($1, $2, $3, $4)", [
+			user_id,
+			title,
+			content,
+			new Date()
+		])
+	}
 
-	static async comment(user_id, content) {}
+	static async delete(id) {
+		await db.query("DELETE FROM blog WHERE id = $1", [id])
+	}
 
-	static async delete(id) {}
+	static async get(id) {
+		return (await db.query("SELECT * FROM blog WHERE id = $1", [id])).rows[0]
+	}
 
-	static async get(id) {}
-
-	static async list(page) {}
+	static async list(page) {
+		return (await db.query("SELECT * FROM blog ORDER BY id ASC OFFSET $1 LIMIT 20", [page * 20])).rows
+	}
 }
 
 export class Comment {
-	static async write(user_id, content) {}
+	static async write(blog_id, user_id, content) {
+		await db.query("INSERT INTO comment(blog_id, writer_id, write_date, content) VALUES($1, $2, $3, $4)", [
+			blog_id,
+			user_id,
+			new Date(),
+			content
+		])
+	}
 
-	static async delete(id) {}
+	static async delete(id) {
+		await db.query("DELETE FROOM comment WHERE id = $1", [id])
+	}
 
-	static async list(blog_id) {}
+	static async list(blog_id) {
+		return (await db.query("SELECT * FROM comment WHERE blog_id = $1", [blog_id])).rows
+	}
 }

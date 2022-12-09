@@ -33,7 +33,7 @@ app.get("/", (req, res) => {
 	const { page = 0 } = req.query
 
 	Blog.list(page)
-		.then((blogs) => res.render("index", { user: req.session.user, blogs }))
+		.then((blogs) => res.render("index", { blogs }))
 		.catch((err) => res.render("error", { err }))
 })
 app.use("/account", account_router)

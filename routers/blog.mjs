@@ -7,12 +7,12 @@ router.get("/:id", (req, res) => {
 	const { id } = req.params
 
 	Blog.get(id)
-		.then((data) => res.render("read", { user: req.session.user, data }))
+		.then((data) => res.render("read", { data }))
 		.catch((err) => res.render("error", { err }))
 })
 router
 	.route("/write")
-	.get((req, res) => res.render("write", { user: req.session.user }))
+	.get((req, res) => res.render("write.html"))
 	.post((req, res) => {
 		if (!req.session.user) {
 			res.redirect("../account/login")
@@ -45,7 +45,7 @@ router.post("/comment", (req, res) => {
 
 	const { id, content } = req.body
 
-	Comment.write(req.session.user, content)
+	Comment.write(id, req.session.user, content)
 		.then(() => res.redirect("/" + id))
 		.catch((err) => res.render("error", { err }))
 })
