@@ -12,10 +12,92 @@
 			<a href="/" class="brand">Oblog</a>
 			<div></div>
 		</nav>
-		<main></main>
+		<main>
+			<form action="/account/signup" method="post" onsubmit="return check_form()">
+				<h1>로그인</h1>
+				<table style="margin: auto">
+					<tr>
+						<td>ID</td>
+						<td><input type="text" name="id" autocomplete="off" required /></td>
+						<td><button type="button" onclick="id_check()">중복확인</button></td>
+					</tr>
+					<tr>
+						<td>비밀번호</td>
+						<td><input type="password" name="password" autocomplete="off" required /></td>
+					</tr>
+					<tr>
+						<td>비밀번호 확인</td>
+						<td><input type="password" name="confirm-password" autocomplete="off" required /></td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<button type="submit">회원가입</button>
+							<button type="button" onclick="location.assign('/account/login')">로그인하기</button>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
 		</footer>
+
+		<script>
+			let unique_id = false
+
+			function check_form() {
+				const form_data = new FormData(document.querySelector('form'))
+				let flag = true
+
+				const invalid = (message) => {
+					alert(message)
+					flag = false
+				}
+
+				if (!unique_id) invalid('ID 중복확인을 해주세요.')
+
+				if (form_data.get('id').length < 3 || form_data.get('id').length > 20)
+					invalid('ID는 3자 이상 20자 미만이여야 합니다.')
+				else if (form_data.get('password').length < 4) invalid('비밀번호는 4자 이상이여야 합니다.')
+				else if (form_data.get('password') !== form_data.get('confirm-password'))
+					invalid('비밀번호가 일치하지 않습니다.')
+
+				return flag
+			}
+
+			function id_check() {
+				const form_data = new FormData(document.querySelector('form'))
+				let flag = true
+
+				const invalid = (message) => {
+					alert(message)
+					flag = false
+				}
+
+				if (!form_data.get('id')) invalid('ID를 입력해 주세요.')
+				else if (form_data.get('id').length < 3 || form_data.get('id').length > 20)
+					invalid('ID는 3자 이상 20자 미만이여야 합니다.')
+
+				if (!flag) return
+
+				const xhr = new XMLHttpRequest()
+				xhr.open('GET', '/account/idcheck/' + form_data.get('id'))
+				xhr.send()
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState == XMLHttpRequest.DONE) {
+						if (xhr.status === 200) {
+							unique_id = JSON.parse(xhr.response).unique
+
+							if (unique_id) alert('사용 가능한 ID입니다.')
+							else alert('이미 사용된 ID입니다.')
+						} else if (xhr.status === 500) {
+							alert('서버에서 오류가 발생하였습니다.')
+							console.log(JSON.parse(xhr.response).err)
+						}
+					}
+				}
+			}
+		</script>
 	</body>
 </html>

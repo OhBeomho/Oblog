@@ -6,19 +6,101 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Oblog</title>
 		<link rel="stylesheet" href="/css/main.css" />
+		<style>
+			ul {
+				width: 90%;
+				list-style: none;
+				padding: 10px 0;
+				margin: auto;
+			}
+
+			li {
+				margin: 20px 0;
+				text-align: left;
+			}
+
+			.content {
+				white-space: pre-wrap;
+				word-break: break-all;
+				text-align: left;
+				padding: 5px 0;
+			}
+		</style>
 	</head>
 	<body>
 		<nav>
 			<a href="/" class="brand">Oblog</a>
 			<div>
-				<a href="/write">글쓰기</a>
+				<a href="/blog/write">글쓰기</a>
 				<a href="/account">계정</a>
 			</div>
 		</nav>
-		<main></main>
+		<main>
+			<article>
+				<h2><%= title %></h2>
+				<div style="display: flex; justify-content: space-between; align-items: center">
+					<span><b><%= writer_id %></b></span>
+					<span style="color: gray"><%= write_date.toLocaleDateString('ko-KR') %></span>
+				</div>
+			</article>
+			<hr />
+			<article class="content"><%= content %></article>
+			<article>
+				<h3>댓글 목록</h3>
+				<ul>
+					<% if (comments.length) { %> <% for (let comment of comments) { %>
+					<li style="box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.5)">
+						<div style="display: flex; justify-content: space-between; align-items: center">
+							<span><b><%= comment.writer_id %></b></span>
+							<span style="color: gray"><%= comment.write_date.toLocaleDateString('ko-KR') %></span>
+						</div>
+						<div class="content"><%= comment.content %></div>
+					</li>
+					<% } %> <% } else { %> 댓글이 없습니다. <% } %>
+				</ul>
+			</article>
+			<div style="margin-top: 20px">
+				<% if (login) { %>
+				<form action="/blog/comment" method="post">
+					<textarea style="width: 90%" name="content" rows="5" maxlength="500" required></textarea>
+					<input type="hidden" name="id" value="<%= id %>" />
+					<button type="submit">댓글 달기</button>
+				</form>
+				<% } else { %>
+				<button type="button" onclick="document.querySelector('dialog').showModal()">로그인</button> 후 댓글을
+				달 수 있습니다. <% } %>
+			</div>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
 		</footer>
+
+		<dialog style="text-align: center">
+			<form action="/account/login" name="login" method="post">
+				<h1>로그인</h1>
+				<table>
+					<tr>
+						<td>ID</td>
+						<td><input type="text" name="id" autocomplete="off" /></td>
+					</tr>
+					<tr>
+						<td>비밀번호</td>
+						<td><input type="password" name="password" autocomplete="off" /></td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<button type="submit">로그인</button>
+							<button type="button" onclick="document.querySelector('dialog').close()">취소</button>
+						</td>
+					</tr>
+				</table>
+				<input type="hidden" name="return_url" />
+			</form>
+		</dialog>
+
+		<script>
+			document.querySelector('input[name="return_url"]').value = location.href
+		</script>
 	</body>
 </html>

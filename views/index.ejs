@@ -6,19 +6,103 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Oblog</title>
 		<link rel="stylesheet" href="/css/main.css" />
+		<style>
+			ul {
+				list-style: none;
+				padding: 10px 0;
+				margin: 0;
+			}
+
+			li {
+				padding: 5px;
+				text-align: left;
+			}
+
+			li a {
+				color: black;
+				display: flex;
+				gap: 10px;
+			}
+
+			.title {
+				flex: 1;
+			}
+
+			li a:hover {
+				text-decoration: none;
+			}
+
+			li:hover {
+				box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+			}
+		</style>
 	</head>
 	<body>
 		<nav>
 			<a href="/" class="brand">Oblog</a>
 			<div>
-				<a href="/write">글쓰기</a>
+				<a href="/blog/write">글쓰기</a>
 				<a href="/account">계정</a>
 			</div>
 		</nav>
-		<main></main>
+		<main>
+			<article>
+				<h1>Oblog</h1>
+				<p>간단한 블로그 사이트</p>
+			</article>
+			<hr />
+			<div style="display: flex; justify-content: space-between; align-items: center">
+				<button type="button" onclick="reset_search()">검색 초기화</button>
+				<div>
+					<input type="search" />
+					<button type="button" onclick="search()">검색</button>
+				</div>
+			</div>
+			<article>
+				<ul>
+					<% if (blogs.length) { %> <% for (let blog of blogs) { %>
+					<li>
+						<a href="/blog/read/<%= blog.id %>">
+							<span class="title"><%= blog.title %></span>
+							<span style="color: gray"><%= blog.write_date.toLocaleDateString("ko-KR") %></span>
+							<span><b><%= blog.writer_id %></b></span>
+						</a>
+					</li>
+					<% } %> <% } else { %>
+					<span class="no-blogs">글이 없습니다.</span>
+					<% } %>
+				</ul>
+				<div>
+					<button type="button" onclick="previous_page()">&lt;</button>
+					<button type="button" onclick="location.assign('/')">처음으로</button>
+					<button type="button" onclick="next_page()">&gt;</button>
+				</div>
+			</article>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
 		</footer>
+
+		<script>
+			const current_page = Number(new URL(location.href).searchParams.get('page')) || 0
+
+			function reset_search() {}
+
+			function search() {}
+
+			function previous_page() {
+				if (current_page <= 0) return
+
+				let previous = current_page - 1
+				location.assign(previous <= 0 ? '/' : '/?page=' + previous)
+			}
+
+			function next_page() {
+				if (document.querySelector('no-blogs') || document.querySelectorAll('li').length < 20) return
+
+				location.assign('/?page=' + (current_page + 1))
+			}
+		</script>
 	</body>
 </html>

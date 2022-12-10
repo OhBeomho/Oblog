@@ -11,14 +11,35 @@
 		<nav>
 			<a href="/" class="brand">Oblog</a>
 			<div>
-				<a href="/write">글쓰기</a>
+				<a href="/blog/write">글쓰기</a>
 				<a href="/account">계정</a>
 			</div>
 		</nav>
-		<main></main>
+		<main>
+			<h1>글쓰기</h1>
+			<form action="/blog/write" method="post">
+				<table style="width: 100%">
+					<tr>
+						<td>제목</td>
+						<td style="text-align: left"><input type="text" name="title" style="width: 90%" required /></td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<textarea name="content" rows="15" style="width: 100%" required></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<button type="submit">글쓰기</button>
+							<button type="button" onclick="history.back()">취소</button>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
 		</footer>
 	</body>
 </html>

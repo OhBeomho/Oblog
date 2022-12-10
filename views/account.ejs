@@ -11,14 +11,35 @@
 		<nav>
 			<a href="/" class="brand">Oblog</a>
 			<div>
-				<a href="/write">글쓰기</a>
+				<a href="/blog/write">글쓰기</a>
 				<a href="/account">계정</a>
 			</div>
 		</nav>
-		<main></main>
+		<main>
+			<h1>계정 정보</h1>
+			<div style="display: flex; justify-content: center; align-items: center; margin: 10px 0; gap: 10px">
+				<img
+					width="130px"
+					height="130px"
+					src="https://www.transparentpng.com/thumb/user/blak-frame-user-profile-png-icon--cupR3D.png"
+					alt=""
+				/>
+				<div style="text-align: left">
+					<b><%= id %></b><br />
+					가입 날짜: <%= join_date.toLocaleDateString("ko-KR") %><br />
+					글 <%= blog_count %>개<br />
+					댓글 <%= comment_count %>개
+				</div>
+			</div>
+			<div>
+				<button type="button" onclick="location.assign('/account/logout')">로그아웃</button>
+				<button type="button" onclick="location.assign('/account/delete')">계정 삭제</button>
+				<button type="button" onclick="location.assign('/')">홈으로</button>
+			</div>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
 		</footer>
 	</body>
 </html>

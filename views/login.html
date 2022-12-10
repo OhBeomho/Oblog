@@ -12,10 +12,48 @@
 			<a href="/" class="brand">Oblog</a>
 			<div></div>
 		</nav>
-		<main></main>
+		<main>
+			<form action="/account/login" method="post" onsubmit="return check_form()">
+				<h1>로그인</h1>
+				<table style="margin: auto">
+					<tr>
+						<td>ID</td>
+						<td><input type="text" name="id" autocomplete="off" required /></td>
+					</tr>
+					<tr>
+						<td>비밀번호</td>
+						<td><input type="password" name="password" autocomplete="off" required /></td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<button type="submit">로그인</button>
+							<button type="button" onclick="location.assign('/account/signup')">회원가입하기</button>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</main>
 		<footer>
-			Made by <a href="https://github.com/OhBeomho">OhBeomho</a>. Source on
-			<a href="https://github.com/OhBeomho/Oblog">GitHub</a>.
+			Made by <a href="https://github.com/OhBeomho">OhBeomho</a><br />
+			Source on <a href="https://github.com/OhBeomho/Oblog">GitHub</a>
 		</footer>
+
+		<script>
+			function check_form() {
+				const form_data = new FormData(document.querySelector('form'))
+				let flag = true
+
+				const invalid = (message) => {
+					alert(message)
+					flag = false
+				}
+
+				if (form_data.get('id').length < 3 || form_data.get('id').length > 20)
+					invalid('ID는 3자 이상 20자 미만입니다.')
+				else if (form_data.get('password').length < 4) invalid('비밀번호는 4자 이상입니다.')
+
+				return flag
+			}
+		</script>
 	</body>
 </html>
