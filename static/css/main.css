@@ -79,7 +79,7 @@ footer a {
 input,
 button,
 textarea {
-	outline-color: rgba(0, 0, 0, 0.6);
+	outline: none;
 }
 
 textarea {
@@ -89,4 +89,33 @@ textarea {
 hr {
 	background-color: var(--primary-color);
 	border-color: var(--primary-color);
+}
+
+input,
+textarea {
+	border: 1px solid var(--primary-color);
+	transition: box-shadow 0.2s;
+}
+
+input:hover,
+textarea:hover,
+button:hover {
+	box-shadow: 0 0 0 2px rgba(40, 40, 40, 0.5);
+}
+
+input:focus,
+textarea:focus,
+button:active {
+	box-shadow: 0 0 0 2px rgba(40, 40, 40, 0.8);
+}
+
+button {
+	border: 0;
+	color: white;
+	background-color: var(--primary-color);
+	transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+	background-color: var(--secondary-color);
 }
