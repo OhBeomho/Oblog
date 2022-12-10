@@ -45,30 +45,43 @@
 			</article>
 			<hr />
 			<article class="content"><%= content %></article>
+			<% if (writer_id === user) { %>
+			<div><button onclick="location.assign('/blog/delete/<%= id %>')">글 삭제</button></div>
+			<% } %>
 			<article>
 				<h3>댓글 목록</h3>
 				<ul>
 					<% if (comments.length) { %> <% for (let comment of comments) { %>
-					<li style="box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.5)">
+					<li style="box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.5)" data-id="<%= comment.id %>">
 						<div style="display: flex; justify-content: space-between; align-items: center">
-							<span><b><%= comment.writer_id %></b></span>
+							<span>
+								<b><%= comment.writer_id %></b>
+								<% if (comment.writer_id === writer_id) { %>
+								<span class="writer-comment"></span>
+								<% } %>
+							</span>
 							<span style="color: gray"><%= comment.write_date.toLocaleDateString('ko-KR') %></span>
 						</div>
 						<div class="content"><%= comment.content %></div>
+						<% if (comment.writer_id === user) { %>
+						<div style="padding-bottom: 4px; text-align: right">
+							<button onclick="delete_comment('<%= comment.id %>')">댓글 삭제</button>
+						</div>
+						<% } %>
 					</li>
 					<% } %> <% } else { %> 댓글이 없습니다. <% } %>
 				</ul>
 			</article>
 			<div style="margin-top: 20px">
-				<% if (login) { %>
+				<% if (user !== null && user !== writer_id) { %>
 				<form action="/blog/comment" method="post">
 					<textarea style="width: 90%" name="content" rows="5" maxlength="500" required></textarea>
 					<input type="hidden" name="id" value="<%= id %>" />
 					<button type="submit">댓글 달기</button>
 				</form>
-				<% } else { %>
-				<button type="button" onclick="document.querySelector('dialog').showModal()">로그인</button> 후 댓글을
-				달 수 있습니다. <% } %>
+				<% } else if (user !== writer_id) { %>
+				<button type="button" onclick="document.querySelector('dialog').showModal()">로그인</button>
+				후 댓글을 달 수 있습니다. <% } %>
 			</div>
 		</main>
 		<footer>
@@ -101,6 +114,21 @@
 
 		<script>
 			document.querySelector('input[name="return_url"]').value = location.href
+
+			function delete_comment(id) {
+				const xhr = new XMLHttpRequest()
+				xhr.open('GET', '/blog/comment_delete/' + id)
+				xhr.send()
+				xhr.onreadystatechange = () => {
+					if (xhr.readyState === XMLHttpRequest.DONE) {
+						if (xhr.status === 200) document.querySelector(`li[data-id="${id}"]`).remove()
+						else if (xhr.status === 500) {
+							alert('서버에서 오류가 발생했습니다.')
+							console.log(JSON.parse(xhr.response).err)
+						}
+					}
+				}
+			}
 		</script>
 	</body>
 </html>

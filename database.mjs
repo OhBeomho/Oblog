@@ -107,6 +107,10 @@ export class Comment {
 		await db.query('DELETE FROM comment WHERE id = $1', [id])
 	}
 
+	static async get(id) {
+		return (await db.query('SELECT * FROM comment WHERE id = $1', [id])).rows[0]
+	}
+
 	static async list(blog_id) {
 		return (await db.query('SELECT * FROM comment WHERE blog_id = $1', [blog_id])).rows
 	}

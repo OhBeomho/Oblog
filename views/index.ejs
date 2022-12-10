@@ -51,13 +51,7 @@
 				<p>간단한 블로그 사이트</p>
 			</article>
 			<hr />
-			<div style="display: flex; justify-content: space-between; align-items: center">
-				<button type="button" onclick="reset_search()">검색 초기화</button>
-				<div>
-					<input type="search" />
-					<button type="button" onclick="search()">검색</button>
-				</div>
-			</div>
+			<div style="text-align: right">검색 <input type="search" oninput="search()" /></div>
 			<article>
 				<ul>
 					<% if (blogs.length) { %> <% for (let blog of blogs) { %>
@@ -74,7 +68,7 @@
 				</ul>
 				<div>
 					<button type="button" onclick="previous_page()">&lt;</button>
-					<button type="button" onclick="location.assign('/')">처음으로</button>
+					<button type="button" onclick="current_page !== 0 && location.assign('/')">처음으로</button>
 					<button type="button" onclick="next_page()">&gt;</button>
 				</div>
 			</article>
@@ -86,10 +80,15 @@
 
 		<script>
 			const current_page = Number(new URL(location.href).searchParams.get('page')) || 0
+			const blog_list = document.querySelector('ul')
+			const blogs = Array.from(document.querySelectorAll('li'))
+			const search_input = document.querySelector('input[type="search"]')
 
-			function reset_search() {}
-
-			function search() {}
+			function search() {
+				blog_list.replaceChildren(
+					...blogs.filter((blog) => blog.querySelector('.title').innerText.includes(search_input.value))
+				)
+			}
 
 			function previous_page() {
 				if (current_page <= 0) return
