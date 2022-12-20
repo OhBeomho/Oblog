@@ -60,6 +60,8 @@ export class Account {
 
 	static async delete(id) {
 		await account_db.query('DELETE FROM account WHERE id = $1', [id])
+		await db.query(`UPDATE blog SET writer_id = '-' WHERE writer_id = $1`, [id])
+		await db.query(`UPDATE comment SET writer_id = '-' WHERE writer_id = $1`, [id])
 	}
 }
 
@@ -73,15 +75,23 @@ export class Blog {
 		).rows[0].id
 	}
 
-	static async delete(id) {
+	static async update(user_id, id, title, content) {
+		if ((await db.query('SELECT writer_id FROM blog WHERE id = $1', [id])).rows[0].writer_id !== user_id)
+			throw new Error('글의 작성자가 아닙니다.')
+		else await db.query('UPDATE blog SET title = $1, content = $2 WHERE id = $3', [title, content, id])
+	}
+
+	static async delete(user_id, id) {
+		if ((await db.query('SELECT writer_id FROM blog WHERE id = $1', [id])).rows[0].writer_id !== user_id)
+			throw new Error('글의 작성자가 아닙니다.')
 		await db.query('DELETE FROM blog WHERE id = $1', [id])
 	}
 
 	static async get(id) {
 		const blog = (await db.query('SELECT * FROM blog WHERE id = $1', [id])).rows[0]
-		const comments = await Comment.list(blog.id)
+		if (!blog) throw new Error('존재하지 않는 글입니다.')
 
-		blog.comments = comments
+		blog.comments = await Comment.list(blog.id)
 
 		return blog
 	}
@@ -104,6 +114,8 @@ export class Comment {
 	}
 
 	static async delete(id) {
+		if ((await db.query('SELECT writer_id FROM comment WHERE id = $1', [id])).rows[0].writer_id !== user_id)
+			throw new Error('글의 작성자가 아닙니다.')
 		await db.query('DELETE FROM comment WHERE id = $1', [id])
 	}
 

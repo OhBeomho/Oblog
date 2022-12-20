@@ -33,7 +33,7 @@
 			</div>
 			<div>
 				<button type="button" onclick="location.assign('/account/logout')">로그아웃</button>
-				<button type="button" onclick="location.assign('/account/delete')">계정 삭제</button>
+				<button type="button" onclick="confirm('정말로 계정을 삭제하시겠습니까?') && location.assign('/account/delete')">계정 삭제</button>
 				<button type="button" onclick="location.assign('/')">홈으로</button>
 			</div>
 		</main>

@@ -52,6 +52,7 @@
 			</div>
 		</nav>
 		<main>
+			<% const deleted = (id) => id === '-' %>
 			<article>
 				<h2><%= title %></h2>
 				<div style="display: flex; justify-content: space-between; align-items: center">
@@ -62,7 +63,11 @@
 							src="https://www.transparentpng.com/thumb/user/blak-frame-user-profile-png-icon--cupR3D.png"
 							alt=""
 						/>
+						<% if (deleted(writer_id)) { %>
+						<b style="color: gray">[deleted]</b>
+						<% } else { %>
 						<b><%= writer_id %></b>
+						<% } %>
 					</span>
 					<span style="color: gray"><%= write_date.toLocaleDateString('ko-KR') %></span>
 				</div>
@@ -70,7 +75,10 @@
 			<hr />
 			<article class="content"><%= content %></article>
 			<% if (writer_id === user) { %>
-			<div><button onclick="location.assign('/blog/delete/<%= id %>')">글 삭제</button></div>
+			<div>
+				<button onclick="location.assign('/blog/delete/<%= id %>')">글 삭제</button>
+				<button onclick="location.assign('/blog/update/<%= id %>')">글 수정</button>
+			</div>
 			<% } %>
 			<article>
 				<h3>댓글 목록</h3>
@@ -85,7 +93,11 @@
 									src="https://www.transparentpng.com/thumb/user/blak-frame-user-profile-png-icon--cupR3D.png"
 									alt=""
 								/>
+								<% if (deleted(comment.writer_id)) { %>
+								<b style="color: gray">[deleted]</b>
+								<% } else { %>
 								<b><%= comment.writer_id %></b>
+								<% } %>
 							</span>
 							<span style="color: gray"><%= comment.write_date.toLocaleDateString('ko-KR') %></span>
 						</div>

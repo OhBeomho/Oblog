@@ -38,6 +38,7 @@
 		</style>
 	</head>
 	<body>
+		<% const deleted = (id) => id === '-' %>
 		<nav>
 			<a href="/" class="brand">Oblog</a>
 			<div>
@@ -59,7 +60,13 @@
 						<a href="/blog/read/<%= blog.id %>">
 							<span class="title"><%= blog.title %></span>
 							<span style="color: gray"><%= blog.write_date.toLocaleDateString("ko-KR") %></span>
-							<span><b><%= blog.writer_id %></b></span>
+							<span>
+								<% if (deleted(blog.writer_id)) { %>
+								<b style="color: gray">[deleted]</b>
+								<% } else { %>
+								<b><%= blog.writer_id %></b>
+								<% } %>
+							</span>
 						</a>
 					</li>
 					<% } %> <% } else { %>
