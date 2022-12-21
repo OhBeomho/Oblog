@@ -52,7 +52,10 @@
 				<p>간단한 블로그 사이트</p>
 			</article>
 			<hr />
-			<div style="text-align: right">검색 <input type="search" oninput="search()" /></div>
+			<div style="display: flex; justify-content: space-between; align-items: center">
+				<div>글쓴이 <input type="text" id="writer_input" oninput="search()" /></div>
+				<div>제목 <input type="search" oninput="search()" /></div>
+			</div>
 			<article>
 				<ul>
 					<% if (blogs.length) { %> <% for (let blog of blogs) { %>
@@ -60,7 +63,7 @@
 						<a href="/blog/read/<%= blog.id %>">
 							<span class="title"><%= blog.title %></span>
 							<span style="color: gray"><%= blog.write_date.toLocaleDateString("ko-KR") %></span>
-							<span>
+							<span class="writer">
 								<% if (deleted(blog.writer_id)) { %>
 								<b style="color: gray">[deleted]</b>
 								<% } else { %>
@@ -90,10 +93,15 @@
 			const blog_list = document.querySelector('ul')
 			const blogs = Array.from(document.querySelectorAll('li'))
 			const search_input = document.querySelector('input[type="search"]')
+			const writer_input = document.querySelector('#writer_input')
 
 			function search() {
 				blog_list.replaceChildren(
-					...blogs.filter((blog) => blog.querySelector('.title').innerText.includes(search_input.value))
+					...blogs.filter(
+						(blog) =>
+							blog.querySelector('.title').textContent.includes(search_input.value) &&
+							blog.querySelector('.writer b').textContent.includes(writer_input.value)
+					)
 				)
 			}
 
